@@ -36,4 +36,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
+          attestations: false
           packages-dir:  ${{ inputs.working-directory }}/dist/
