@@ -11,6 +11,9 @@ on:
       environment-url:
         type: string
         required: false
+    secrets:
+      api-token:
+        required: false
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -35,4 +38,5 @@ jobs:
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          password: ${{ secrets.api-token }}
           packages-dir:  ${{ inputs.working-directory }}/dist/

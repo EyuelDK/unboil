@@ -12,7 +12,8 @@ jobs:
     uses: ./.github/workflows/publish.python.package.yml
     permissions:
       id-token: write
-    secrets: inherit
+    secrets:
+      api-token: ${{ secrets.PYPI_API_TOKEN_FOR_UNBOIL_FASTAPI_AUTH }}
     with:
       working-directory: unboil-fastapi-auth
       environment-name: pypi
