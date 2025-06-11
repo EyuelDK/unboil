@@ -5,10 +5,19 @@ on:
       working-directory:
         type: string
         required: true
+      environment-name:
+        type: string
+        required: false
+      environment-url:
+        type: string
+        required: false
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment:
+      name: ${{ inputs.environment-name }}
+      url: ${{ inputs.environment-url }}
     steps:
 
       - uses: actions/checkout@v4
