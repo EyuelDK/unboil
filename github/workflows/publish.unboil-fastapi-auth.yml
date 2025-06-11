@@ -1,0 +1,16 @@
+name: Publish unboil-fastapi-auth
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  publish:
+    environment:
+      name: pypi
+      url: https://pypi.org/p/unboil-fastapi-auth
+    permissions:
+      id-token: write
+    uses: ./.github/workflows/publish.python.package.yml
+    with:
+      working-directory: unboil-fastapi-auth

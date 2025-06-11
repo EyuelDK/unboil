@@ -13,15 +13,15 @@ class Stripe:
     
     def __init__(
         self, 
-        base_url: str,
         metadata: MetaData, 
         session_maker: async_sessionmaker[AsyncSession], 
         stripe_api_key: str,
+        stripe_webhook_secret: str,
         user_model: type[UserLike],
         require_user: Callable[..., UserLike] | Callable[..., Awaitable[UserLike]]
     ):
-        self.base_url = base_url
         self.require_user = require_user
+        self.stripe_webhook_secret = stripe_webhook_secret
         self.models = Models(
             metadata=metadata,
             user_model=user_model,
@@ -35,12 +35,8 @@ class Stripe:
         )
         
     async def setup_routes(self, app: FastAPI):
-        endpoint = await self.service.ensure_webhook_endpoint(
-            f"{self.base_url}/stripe/webhook"
-        )
-        assert endpoint.secret is not None, "Webhook secret is missing!"
         router = create_router(
-            stripe_webhook_secret=endpoint.secret,
+            stripe_webhook_secret=self.stripe_webhook_secret,
             service=self.service,
             dependencies=self.dependencies,
             require_user=self.require_user,
