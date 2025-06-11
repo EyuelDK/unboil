@@ -1,0 +1,22 @@
+name: Publish unboil-fastapi-stripe
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - unboil-fastapi-stripe/**
+      - .github/workflows/publish.python.package.yml
+      - .github/workflows/publish.unboil-fastapi-stripe.yml
+  workflow_dispatch:
+jobs:
+
+  publish:
+    uses: ./.github/workflows/publish.python.package.yml
+    permissions:
+      id-token: write
+    secrets: inherit
+    with:
+      working-directory: unboil-fastapi-stripe
+      environment-name: pypi
+      environment-url: https://pypi.org/p/unboil-fastapi-stripe
+
