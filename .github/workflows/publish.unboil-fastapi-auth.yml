@@ -5,6 +5,8 @@ on:
       - main
     paths:
       - unboil-fastapi-auth/**
+      - .github/workflows/publish.python.package.yml
+      - .github/workflows/publish.unboil-fastapi-auth.yml
   workflow_dispatch:
 jobs:
 
