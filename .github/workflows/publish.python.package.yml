@@ -9,7 +9,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    working-directory: ${{ inputs.working-directory }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
 
       - uses: actions/checkout@v4
