@@ -10,10 +10,10 @@ jobs:
 
   publish:
     uses: ./.github/workflows/publish.python.package.yml
-    with:
-      working-directory: unboil-fastapi-auth
+    permissions:
+      id-token: write 
     environment:
       name: pypi
       url: https://pypi.org/p/unboil-fastapi-auth
-    permissions:
-      id-token: write 
+    with:
+      working-directory: unboil-fastapi-auth
