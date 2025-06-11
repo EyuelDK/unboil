@@ -1,0 +1,19 @@
+[project]
+name = "unboil-fastapi-stripe"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "eyueldk" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.12",
+    "pydantic>=2.11.5",
+    "sqlalchemy>=2.0.41",
+    "stripe>=12.2.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
