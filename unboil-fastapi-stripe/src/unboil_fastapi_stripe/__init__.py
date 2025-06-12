@@ -1,6 +1,7 @@
-from typing import Awaitable, Callable
+from typing import Any, Awaitable, Callable, Literal, Protocol, Type, TypedDict
 from fastapi import FastAPI
 from sqlalchemy import MetaData
+from sqlalchemy.orm import Mapped
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from unboil_fastapi_stripe.dependencies import Dependencies
@@ -8,6 +9,9 @@ from unboil_fastapi_stripe.models import Models, UserLike
 from unboil_fastapi_stripe.routes import create_router
 from unboil_fastapi_stripe.service import Service
 
+class UserModel(Protocol):
+    __tablename__: str
+    id: Mapped[Any]
 
 class Stripe:
     
@@ -17,28 +21,28 @@ class Stripe:
         session_maker: async_sessionmaker[AsyncSession], 
         stripe_api_key: str,
         stripe_webhook_secret: str,
-        user_model: type[UserLike],
+        user_model: Type[UserModel],
         require_user: Callable[..., UserLike] | Callable[..., Awaitable[UserLike]]
     ):
-        self.require_user = require_user
         self.stripe_webhook_secret = stripe_webhook_secret
         self.models = Models(
             metadata=metadata,
-            user_model=user_model,
+            user_foreign_key=f"{user_model.__tablename__}.{user_model.id.key}",
         )
         self.service = Service(
             models=self.models, 
             stripe_api_key=stripe_api_key
         )
         self.dependencies = Dependencies(
+            service=self.service,
+            require_user=require_user,
             session_maker=session_maker,
         )
         
-    async def setup_routes(self, app: FastAPI):
+    async def on_startup(self, app: FastAPI):
         router = create_router(
             stripe_webhook_secret=self.stripe_webhook_secret,
             service=self.service,
             dependencies=self.dependencies,
-            require_user=self.require_user,
         )
         app.include_router(router, prefix="/api")

@@ -25,7 +25,7 @@ class Auth:
             session_maker=session_maker
         )
         
-    async def setup_routes(self, app: FastAPI):
+    async def on_startup(self, app: FastAPI):
         router = create_router(
             providers=self.providers,
             service=self.service,

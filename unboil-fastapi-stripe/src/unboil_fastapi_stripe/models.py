@@ -1,41 +1,72 @@
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, TypeVar, runtime_checkable
 import uuid
 from datetime import datetime
-from sqlalchemy import UUID, DateTime, ForeignKey, String, func, MetaData
+from sqlalchemy import UUID, DateTime, ForeignKey, Index, String, func, MetaData
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 
-__all__ = ["Models", "UserLike", "HasName", "HasEmail"]
+__all__ = [
+    "Models",
+    "UserLike",
+    "HasName",
+    "HasEmail",
+    "Customer",
+    "Subscription",
+]
 
-@runtime_checkable
+
 class UserLike(Protocol):
-    __tablename__: str
     id: Mapped[Any]
+
 
 @runtime_checkable
 class HasName(Protocol):
     name: Mapped[str]
 
+
 @runtime_checkable
 class HasEmail(Protocol):
     email: Mapped[str]
 
-class Models[TUserLike: UserLike]:
-    
+
+class Identifiable(Protocol):
+    id: Mapped[uuid.UUID]
+
+
+class Timestamped(Protocol):
+    created_at: Mapped[datetime]
+    last_updated_at: Mapped[datetime]
+
+
+class Customer(Identifiable, Timestamped, Protocol):
+    stripe_customer_id: Mapped[str]
+    user_id: Mapped[Any]
+    subscriptions: Mapped[list["Subscription"]]
+
+
+class Subscription(Identifiable, Timestamped, Protocol):
+    stripe_subscription_item_id: Mapped[str]
+    stripe_product_id: Mapped[str]
+    customer_id: Mapped[uuid.UUID]
+    current_period_end: Mapped[datetime]
+
+
+class Models:
+
     def __init__(
-        self, 
-        metadata: MetaData, 
-        user_model: type[TUserLike],
+        self,
+        metadata: MetaData,
+        user_foreign_key: str,
     ):
-        
+
         metadata_ = metadata
+
         class Base(DeclarativeBase):
             metadata = metadata_
-        
+
         class Identifiable:
             id: Mapped[uuid.UUID] = mapped_column(
                 UUID(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4()
             )
-
 
         class Timestamped:
             created_at: Mapped[datetime] = mapped_column(
@@ -52,33 +83,49 @@ class Models[TUserLike: UserLike]:
 
         class Customer(Base, Identifiable, Timestamped):
             __tablename__ = "stripe_customers"
+            __table_args__ = (
+                Index("ix_stripe_customers_stripe_customer_id", "stripe_customer_id"),
+                Index("ix_stripe_customers_user_id", "user_id"),
+            )
             stripe_customer_id: Mapped[str] = mapped_column(String, unique=True)
             user_id: Mapped[Any] = mapped_column(
-                ForeignKey(f"{user_model.__tablename__}.{user_model.id.key}"), unique=True
+                ForeignKey(user_foreign_key), unique=True
             )
-            user: Mapped[TUserLike] = relationship()
             subscriptions: Mapped[list["Subscription"]] = relationship()
-            
+
             def __init__(self, user_id: Any, stripe_customer_id: str):
                 self.user_id = user_id
                 self.stripe_customer_id = stripe_customer_id
-                
+
         class Subscription(Base, Identifiable, Timestamped):
             __tablename__ = "stripe_subscriptions"
-            stripe_subscription_item_id: Mapped[str] = mapped_column(String, unique=True)
+            __table_args__ = (
+                Index(
+                    "ix_stripe_subscriptions_stripe_product_id_current_period_end",
+                    "stripe_product_id",
+                    "current_period_end",
+                ),
+                Index(
+                    "ix_stripe_subscriptions_stripe_subscription_item_id",
+                    "stripe_subscription_item_id",
+                ),
+            )
+            stripe_subscription_item_id: Mapped[str] = mapped_column(String)
             stripe_product_id: Mapped[str] = mapped_column(String)
             customer_id: Mapped[uuid.UUID] = mapped_column(
                 ForeignKey(f"{Customer.__tablename__}.{Customer.id.key}")
             )
             customer: Mapped["Customer"] = relationship()
-            current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-            
+            current_period_end: Mapped[datetime] = mapped_column(
+                DateTime(timezone=True)
+            )
+
             def __init__(
-                self, 
+                self,
                 customer_id: uuid.UUID,
                 current_period_end: datetime,
                 stripe_product_id: str,
-                stripe_subscription_item_id: str, 
+                stripe_subscription_item_id: str,
             ):
                 self.customer_id = customer_id
                 self.current_period_end = current_period_end

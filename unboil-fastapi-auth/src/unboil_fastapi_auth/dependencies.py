@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Annotated, Generic, NewType, TypeVar
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from fastapi import status
 
 from unboil_fastapi_auth.models import Models, User
 from unboil_fastapi_auth.service import Service
@@ -36,7 +37,9 @@ class Dependencies:
         db: Annotated[AsyncSession, Depends(get_db)],
     ):
         if access_token is None:
-            raise HTTPException(status_code=401, detail="Unauthorized")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED"
+            )
         session = await self.service.find_session(
             db=db, access_token=access_token, include_user=True
         )
@@ -47,5 +50,7 @@ class Dependencies:
         user: Annotated[User | None, Depends(get_user)]
     ):
         if user is None:
-            raise HTTPException(status_code=401, detail="Unauthorized")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED"
+            )
         return user

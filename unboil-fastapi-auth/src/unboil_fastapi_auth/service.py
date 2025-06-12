@@ -32,7 +32,7 @@ class Service:
     async def find_user(
         self, 
         db: AsyncSession, 
-        email: str = NOT_SET
+        email: str = NOT_SET,
     ):
         query = select(self.models.User)
         if email is not NOT_SET:

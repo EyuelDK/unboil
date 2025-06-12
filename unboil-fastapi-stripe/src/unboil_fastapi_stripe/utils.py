@@ -1,9 +1,9 @@
-from typing import Any, Literal, Union, TypeVar
+from typing import Any, Awaitable, Callable, Literal, Union, TypeVar
+from fastapi import Depends
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 T = TypeVar("T")
-
 
 def make_literal(*values: str) -> Any:
     return Literal[*values]  # type: ignore

@@ -45,12 +45,27 @@ class Service:
     async def find_subscription(
         self,
         db: AsyncSession,
+        user_id: Any = UNSET,
         stripe_subscription_item_id: str = UNSET,
+        stripe_product_ids: list[str] = UNSET,
+        max_current_period_end: datetime = UNSET,
     ):
         query = select(self.models.Subscription)
+        if user_id is not UNSET:
+            query = query.where(
+                self.models.Subscription.customer.user_id == user_id,
+            )
         if stripe_subscription_item_id is not UNSET:
             query = query.where(
                 self.models.Subscription.stripe_subscription_item_id == stripe_subscription_item_id,
+            )
+        if stripe_product_ids is not UNSET:
+            query = query.where(
+                self.models.Subscription.stripe_product_id.in_(stripe_product_ids),
+            )
+        if max_current_period_end is not UNSET:
+            query = query.where(
+                self.models.Subscription.current_period_end <= max_current_period_end,
             )
         return await fetch_one(db=db, query=query)
 

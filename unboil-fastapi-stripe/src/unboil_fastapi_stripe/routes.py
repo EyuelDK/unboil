@@ -14,7 +14,6 @@ def create_router(
     stripe_webhook_secret: str,
     service: Service,
     dependencies: Dependencies,
-    require_user: Callable[..., UserLike] | Callable[..., Awaitable[UserLike]]
 ):
         
     router = APIRouter(prefix="/stripe", tags=["Stripe"])
@@ -23,7 +22,7 @@ def create_router(
     async def checkout_session(
         request: Annotated[CheckoutSession, Body()],
         db: Annotated[AsyncSession, Depends(dependencies.get_db)],
-        user: Annotated[UserLike, Depends(require_user)],
+        user: Annotated[UserLike, Depends(dependencies.require_user)],
     ):
         customer = await service.ensure_customer(
             db=db,
