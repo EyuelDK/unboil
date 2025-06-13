@@ -9,6 +9,7 @@ from unboil_fastapi_stripe.dependencies import Dependencies
 from unboil_fastapi_stripe.models import Models, UserLike
 from unboil_fastapi_stripe.routes import create_router
 from unboil_fastapi_stripe.service import Service
+from unboil_fastapi_stripe.settings import Settings
 
 class UserModel(Protocol):
     __tablename__: str
@@ -18,15 +19,20 @@ class Stripe:
     
     def __init__(
         self, 
-        metadata: MetaData, 
-        session_maker: async_sessionmaker[AsyncSession] | sessionmaker[Session], 
-        stripe_api_key: str,
-        stripe_webhook_secret: str,
+        metadata: MetaData,
+        session_maker: async_sessionmaker[AsyncSession] | sessionmaker[Session],
         user_model: Type[UserModel],
-        require_user: Callable[..., UserLike] | Callable[..., Awaitable[UserLike]]
+        require_user: Callable[..., UserLike] | Callable[..., Awaitable[UserLike]],
+        stripe_webhook_secret: str | None = None,
+        stripe_api_key: str | None = None,
     ):
+        settings = Settings(
+            stripe_api_key=stripe_api_key,
+            stripe_webhook_secret=stripe_webhook_secret, 
+        )
         self.config = Config(
-            stripe_webhook_secret=stripe_webhook_secret
+            stripe_webhook_secret=settings.stripe_webhook_secret,
+            stripe_api_key=settings.stripe_api_key,
         )
         self.models = Models(
             metadata=metadata,
@@ -34,7 +40,7 @@ class Stripe:
         )
         self.service = Service(
             models=self.models, 
-            stripe_api_key=stripe_api_key
+            config=self.config,
         )
         self.dependencies = Dependencies(
             service=self.service,

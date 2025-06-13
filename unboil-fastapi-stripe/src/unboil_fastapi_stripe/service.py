@@ -5,6 +5,7 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from unboil_fastapi_stripe.config import Config
 from unboil_fastapi_stripe.models import Models
 from unboil_fastapi_stripe.utils import delete, fetch_all, fetch_one, save
 
@@ -13,16 +14,16 @@ UNSET: Any = object()
 
 class Service:
     
-    def __init__(self, models: Models, stripe_api_key: str):
+    def __init__(self, models: Models, config: Config):
         self.models = models
-        self.stripe_api_key = stripe_api_key
+        self.config = config
     
     async def ensure_webhook_endpoint(self, url: str):
         endpoint = await self.find_webhook_endpoint(url=url)
         if endpoint is not None:
             return endpoint
         return await stripe.WebhookEndpoint.create_async(
-            api_key=self.stripe_api_key,
+            api_key=self.config.stripe_api_key,
             url=url,
             enabled_events=["*"],
         )
@@ -31,7 +32,7 @@ class Service:
         starting_after = ""
         while True:
             response = await stripe.WebhookEndpoint.list_async(
-                api_key=self.stripe_api_key,
+                api_key=self.config.stripe_api_key,
                 limit=100, 
                 starting_after=starting_after
             )
@@ -158,7 +159,7 @@ class Service:
         email: str | None = None,
     ):
         stripe_customer = stripe.Customer.create(
-            api_key=self.stripe_api_key,
+            api_key=self.config.stripe_api_key,
             name=name or "",
             email=email or "",
         )
