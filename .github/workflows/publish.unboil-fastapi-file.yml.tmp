@@ -1,0 +1,22 @@
+name: Publish unboil-fastapi-file
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - unboil-fastapi-file/**
+      - .github/workflows/publish.python.package.yml
+      - .github/workflows/publish.unboil-fastapi-file.yml
+  workflow_dispatch:
+jobs:
+
+  publish:
+    uses: ./.github/workflows/publish.python.package.yml
+    permissions:
+      id-token: write
+    secrets: inherit
+    with:
+      working-directory: unboil-fastapi-file
+      environment-name: pypi
+      environment-url: https://pypi.org/p/unboil-fastapi-file
+
