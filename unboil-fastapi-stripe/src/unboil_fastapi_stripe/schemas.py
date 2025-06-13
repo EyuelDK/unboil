@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Literal
 from pydantic import BaseModel, Field
 
@@ -10,3 +11,7 @@ class CheckoutSessionRequest(BaseModel):
 
 class CheckoutSessionResponse(BaseModel):
     checkoutSessionUrl: str
+    
+class PriceResponse(BaseModel):
+    unit_amount: Decimal
+    currency: str

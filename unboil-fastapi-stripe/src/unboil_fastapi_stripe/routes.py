@@ -1,3 +1,4 @@
+from decimal import ROUND_HALF_UP, Decimal
 import stripe
 import stripe.webhook
 from typing import Annotated, Awaitable, Callable
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unboil_fastapi_stripe.config import Config
 from unboil_fastapi_stripe.dependencies import Dependencies
 from unboil_fastapi_stripe.models import HasEmail, HasName, UserLike
-from unboil_fastapi_stripe.schemas import CheckoutSessionResponse, CheckoutSessionRequest
+from unboil_fastapi_stripe.schemas import CheckoutSessionResponse, CheckoutSessionRequest, PriceResponse
 from unboil_fastapi_stripe.service import Service
 
 __all__ = ["create_router"]
@@ -18,6 +19,15 @@ def create_router(
 ):
         
     router = APIRouter(prefix="/stripe", tags=["Stripe"])
+
+    @router.post("/prices/{priceId}")
+    async def get_price(priceId: str) -> PriceResponse:
+        price = await service.find_price(price_id=priceId)
+        unit_amount = Decimal(price.unit_amount or 0) / Decimal(100)
+        return PriceResponse(
+            currency=price.currency,
+            unit_amount=unit_amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+        )
 
     @router.post("/checkout")
     async def checkout_session(

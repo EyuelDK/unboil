@@ -1,4 +1,5 @@
 import stripe
+from aiocache import Cache, cached
 from datetime import datetime, timezone
 from typing import Any, TypeVar
 import uuid
@@ -11,6 +12,8 @@ from unboil_fastapi_stripe.utils import delete, fetch_all, fetch_one, save
 
 T = TypeVar("T")
 UNSET: Any = object()
+
+
 
 class Service:
     
@@ -42,6 +45,14 @@ class Service:
             if not response.has_more:
                 return
             starting_after = response.data[-1].id
+    
+    
+    @cached(ttl=60)
+    async def find_price(self, price_id: str):
+        return await stripe.Price.retrieve_async(
+            api_key=self.config.stripe_api_key,
+            id=price_id,
+        )
     
     async def find_subscription(
         self,
