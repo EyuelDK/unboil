@@ -20,9 +20,9 @@ class Service:
     def __init__(self, models: Models, config: Config):
         self.models = models
         self.config = config
-    
+        
     @cached(ttl=60)
-    async def find_price(self, price_id: str):
+    async def fetch_price(self, price_id: str):
         return await stripe.Price.retrieve_async(
             api_key=self.config.stripe_api_key,
             id=price_id,
