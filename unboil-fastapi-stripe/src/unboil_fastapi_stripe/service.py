@@ -80,7 +80,7 @@ class Service:
 
     async def create_or_update_subscription(
         self,
-        db: AsyncSession,
+        db: AsyncSession | Session,
         stripe_subscription_item_id: str,
         stripe_product_id: str,
         customer_id: uuid.UUID,
@@ -112,7 +112,7 @@ class Service:
 
     async def create_or_update_subscriptions_from_stripe_subscription(
         self,
-        db: AsyncSession,
+        db: AsyncSession | Session,
         stripe_subscription: stripe.Subscription,
     ):
         if isinstance(stripe_subscription.customer, stripe.Customer):
@@ -124,24 +124,23 @@ class Service:
         )
         if customer is None:
             return
-        async with db.begin():
-            return [
-                await self.create_or_update_subscription(
-                    db=db,
-                    auto_commit=False,
-                    customer_id=customer.id,
-                    stripe_product_id=item.price.product.id,
-                    stripe_subscription_item_id=item.id,
-                    current_period_end=item.current_period_end,
-                )
-                for item in stripe_subscription.items.data
-                if isinstance(item.price.product, stripe.Product)
-            ]
+        for item in stripe_subscription.items.data:
+            if isinstance(item.price.product, stripe.Product):
+                product_id = item.price.product.id
+            else:
+                product_id = item.price.product
+            await self.create_or_update_subscription(
+                db=db,
+                customer_id=customer.id,
+                stripe_product_id=product_id,
+                stripe_subscription_item_id=item.id,
+                current_period_end=item.current_period_end,
+            )
 
 
     async def delete_subscriptions_from_stripe_subscription(
         self,
-        db: AsyncSession,
+        db: AsyncSession | Session,
         stripe_subscription: stripe.Subscription,
     ):
         subscriptions = self.list_subscriptions(

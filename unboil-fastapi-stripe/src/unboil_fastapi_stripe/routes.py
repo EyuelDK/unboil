@@ -89,8 +89,8 @@ def create_router(
     @router.post("/webhook", include_in_schema=False)
     async def webhook(
         request: Request,
-        stripe_signature: Annotated[str, Header(alias="stripe-signature")],
-        db: Annotated[AsyncSession, Depends(dependencies.get_db)],
+        stripe_signature: str = Header(alias="stripe-signature"),
+        db = InferDepends(dependencies.get_db),
     ):
         payload = await request.body()
         try:
