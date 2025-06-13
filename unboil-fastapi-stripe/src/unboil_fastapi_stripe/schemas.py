@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Callable, Generic, Literal, TypeVar
+from fastapi import Query
 from pydantic import BaseModel
 
 from unboil_fastapi_stripe.utils import PaginatedResult
@@ -21,7 +22,6 @@ class CheckoutSessionResponse(BaseModel):
 class PriceResponse(BaseModel):
     amount: float
     currency: str
-
 
 class PaginatedResponse(BaseModel, Generic[R]):
     hasMore: bool

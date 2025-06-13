@@ -2,7 +2,7 @@ from decimal import ROUND_HALF_UP, Decimal
 import stripe
 import stripe.webhook
 from typing import Annotated, Awaitable, Callable
-from fastapi import APIRouter, Body, Depends, HTTPException, Header, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Header, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from unboil_fastapi_stripe import schemas
 from unboil_fastapi_stripe.config import Config
@@ -32,12 +32,16 @@ def create_router(
         
     @router.get("/user/subscriptions")
     async def list_user_subscriptions(
+        offset: int = Query(default=0),
+        limit: int = Query(default=20, ge=1, le=100),
         db = InferDepends(dependencies.get_db),
         user = InferDepends(dependencies.require_user),
     ) -> PaginatedResponse[schemas.Subscription]:
         subscriptions = await service.list_subscriptions(
             db=db,
             user_id=user.id,
+            offset=offset,
+            limit=limit,
         )
         return PaginatedResponse.from_result(
             result=subscriptions,
