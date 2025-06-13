@@ -23,10 +23,9 @@ def create_router(
     @router.get("/prices/{priceId}")
     async def get_price(priceId: str) -> PriceResponse:
         price = await service.find_price(price_id=priceId)
-        unit_amount = Decimal(price.unit_amount or 0) / Decimal(100)
         return PriceResponse(
             currency=price.currency,
-            unitAmount=unit_amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            amount=float(f"{(price.unit_amount or 0) / 100:.2f}"),
         )
 
     @router.post("/checkout")

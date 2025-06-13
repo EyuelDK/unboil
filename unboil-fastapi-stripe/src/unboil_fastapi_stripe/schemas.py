@@ -1,6 +1,5 @@
-from decimal import Decimal
 from typing import Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class CheckoutSessionRequest(BaseModel):
@@ -13,5 +12,5 @@ class CheckoutSessionResponse(BaseModel):
     checkoutSessionUrl: str
     
 class PriceResponse(BaseModel):
-    unitAmount: Decimal
+    amount: float
     currency: str
