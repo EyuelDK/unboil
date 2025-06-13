@@ -65,7 +65,7 @@ class Models:
             )
             stripe_customer_id: Mapped[str] = mapped_column(String(255), unique=True)
             user_id: Mapped[Any] = mapped_column(ForeignKey(user_foreign_key), unique=True)
-            subscriptions: Mapped[list["Subscription"]] = relationship()
+            subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="customer")
 
             def __init__(self, stripe_customer_id: str, user_id: Any):
                 self.stripe_customer_id = stripe_customer_id
@@ -83,7 +83,7 @@ class Models:
             customer_id: Mapped[uuid.UUID] = mapped_column(
                 ForeignKey(f"{Customer.__tablename__}.{Customer.id.key}")
             )
-            customer: Mapped["Customer"] = relationship()
+            customer: Mapped["Customer"] = relationship(back_populates="subscriptions")
             current_period_end: Mapped[datetime] = mapped_column(
                 DateTime(timezone=True)
             )

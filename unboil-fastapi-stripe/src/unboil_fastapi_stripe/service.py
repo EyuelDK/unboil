@@ -124,7 +124,8 @@ class Service:
         )
         if customer is None:
             return
-        for item in stripe_subscription.items.data:
+        subscription_items: list[stripe.SubscriptionItem] = stripe_subscription["items"]["data"]
+        for item in subscription_items:
             if isinstance(item.price.product, stripe.Product):
                 product_id = item.price.product.id
             else:
@@ -143,11 +144,10 @@ class Service:
         db: AsyncSession | Session,
         stripe_subscription: stripe.Subscription,
     ):
+        subscription_items: list[stripe.SubscriptionItem] = stripe_subscription["items"]["data"]
         subscriptions = self.list_subscriptions(
             db=db,
-            stripe_subscription_item_ids=[
-                item.id for item in stripe_subscription.items.data
-            ]
+            stripe_subscription_item_ids=[item.id for item in subscription_items]
         )
         await delete(
             db=db,
