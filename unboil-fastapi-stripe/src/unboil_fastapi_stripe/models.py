@@ -77,9 +77,9 @@ class Models:
                 Index("ix_stripe_subscriptions_stripe_product_id", "stripe_product_id"),
             )
             stripe_subscription_item_id: Mapped[str] = mapped_column(
-                String, unique=True
+                String(255), unique=True
             )
-            stripe_product_id: Mapped[str] = mapped_column(String)
+            stripe_product_id: Mapped[str] = mapped_column(String(255))
             customer_id: Mapped[uuid.UUID] = mapped_column(
                 ForeignKey(f"{Customer.__tablename__}.{Customer.id.key}")
             )
