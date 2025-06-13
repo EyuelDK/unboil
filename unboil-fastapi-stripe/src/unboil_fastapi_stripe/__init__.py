@@ -9,7 +9,6 @@ from unboil_fastapi_stripe.dependencies import Dependencies
 from unboil_fastapi_stripe.models import Models, UserLike
 from unboil_fastapi_stripe.routes import create_router
 from unboil_fastapi_stripe.service import Service
-from unboil_fastapi_stripe.settings import Settings
 
 class UserModel(Protocol):
     __tablename__: str
@@ -23,16 +22,12 @@ class Stripe:
         session_maker: async_sessionmaker[AsyncSession] | sessionmaker[Session],
         user_model: Type[UserModel],
         require_user: Callable[..., UserLike] | Callable[..., Awaitable[UserLike]],
-        stripe_webhook_secret: str | None = None,
-        stripe_api_key: str | None = None,
+        stripe_webhook_secret: str,
+        stripe_api_key: str,
     ):
-        settings = Settings(
-            stripe_api_key=stripe_api_key,
-            stripe_webhook_secret=stripe_webhook_secret, 
-        )
         self.config = Config(
-            stripe_webhook_secret=settings.stripe_webhook_secret,
-            stripe_api_key=settings.stripe_api_key,
+            stripe_webhook_secret=stripe_webhook_secret,
+            stripe_api_key=stripe_api_key,
         )
         self.models = Models(
             metadata=metadata,
