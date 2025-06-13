@@ -2,8 +2,9 @@ from datetime import datetime, timezone
 from typing import Awaitable, Callable
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from unboil_fastapi_stripe.models import Subscription, UserLike
+from unboil_fastapi_stripe.models import UserLike
 from unboil_fastapi_stripe.service import Service
+from unboil_fastapi_stripe.utils import InferDepends
 
 class Dependencies:
 
@@ -26,23 +27,26 @@ class Dependencies:
 
     def get_subscription(self, product_ids: list[str]):
         async def dependency(
-            user: UserLike = Depends(self.require_user),
-            db: AsyncSession = Depends(self.get_db),
+            user = InferDepends(self.require_user),
+            db = InferDepends(self.get_db),
         ):
             subscription = await self.service.find_subscription(
                 db=db,
                 user_id=user.id,
-                stripe_product_ids=product_ids,
-                max_current_period_end=datetime.now(timezone.utc),
+                stripe_product_id_in=product_ids,
             )
             return subscription
         return dependency
 
-    async def requires_subscription(self, product_ids: list[str]):
+    async def requires_subscription(self, allowed_product_ids: list[str]):
         def dependency(
-            subscription: Subscription | None = Depends(self.get_subscription(product_ids)),
+            subscription = InferDepends(self.get_subscription(allowed_product_ids)),
         ):
             if subscription is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED"
+                )
+            if subscription.current_period_end < datetime.now(timezone.utc):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED"
                 )

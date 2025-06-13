@@ -63,23 +63,12 @@ def create_router(
         except (ValueError, stripe.SignatureVerificationError) as e:
             raise HTTPException(status_code=400, detail="Invalid Stripe webhook")
 
-        if event.type == "customer.subscription.created":
+        if event.type == "customer.subscription.created" or \
+            event.type == "customer.subscription.updated":
             stripe_subscription = stripe.Subscription(**event.data.object)
-            assert isinstance(stripe_subscription.customer, stripe.Customer)
-            customer = await service.find_customer(
-                db=db, stripe_customer_id=stripe_subscription.customer.id
-            )
-            if customer is None:
-                raise HTTPException(status_code=404, detail="Customer not found")
-            await service.create_subscriptions_from_stripe_subscription(
+            await service.create_or_update_subscriptions_from_stripe_subscription(
                 db=db,
-                customer_id=customer.id,
                 stripe_subscription=stripe_subscription
-            )
-        elif event.type == "customer.subscription.updated":
-            stripe_subscription = stripe.Subscription(**event.data.object)
-            await service.update_subscriptions_from_stripe_subscription(
-                db=db, stripe_subscription=stripe_subscription
             )
         elif event.type == "customer.subscription.deleted":
             stripe_subscription = stripe.Subscription(**event.data.object)

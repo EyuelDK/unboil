@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "sandbox"
+		},
+		{
+			"path": "unboil-fastapi-auth"
+		},
+		{
+			"path": "unboil-fastapi-file"
+		},
+		{
+			"path": "unboil-fastapi-stripe"
+		}
+	],
+	"settings": {}
+}

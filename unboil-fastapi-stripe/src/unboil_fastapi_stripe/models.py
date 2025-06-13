@@ -1,7 +1,16 @@
 from typing import Any, Protocol, TypeVar, runtime_checkable
 import uuid
 from datetime import datetime
-from sqlalchemy import UUID, DateTime, ForeignKey, Index, String, func, MetaData
+from sqlalchemy import (
+    UUID,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    UniqueConstraint,
+    func,
+    MetaData,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 
 __all__ = [
@@ -9,45 +18,7 @@ __all__ = [
     "UserLike",
     "HasName",
     "HasEmail",
-    "Customer",
-    "Subscription",
 ]
-
-
-class UserLike(Protocol):
-    id: Mapped[Any]
-
-
-@runtime_checkable
-class HasName(Protocol):
-    name: Mapped[str]
-
-
-@runtime_checkable
-class HasEmail(Protocol):
-    email: Mapped[str]
-
-
-class Identifiable(Protocol):
-    id: Mapped[uuid.UUID]
-
-
-class Timestamped(Protocol):
-    created_at: Mapped[datetime]
-    last_updated_at: Mapped[datetime]
-
-
-class Customer(Identifiable, Timestamped, Protocol):
-    stripe_customer_id: Mapped[str]
-    user_id: Mapped[Any]
-    subscriptions: Mapped[list["Subscription"]]
-
-
-class Subscription(Identifiable, Timestamped, Protocol):
-    stripe_subscription_item_id: Mapped[str]
-    stripe_product_id: Mapped[str]
-    customer_id: Mapped[uuid.UUID]
-    current_period_end: Mapped[datetime]
 
 
 class Models:
@@ -100,17 +71,11 @@ class Models:
         class Subscription(Base, Identifiable, Timestamped):
             __tablename__ = "stripe_subscriptions"
             __table_args__ = (
-                Index(
-                    "ix_stripe_subscriptions_stripe_product_id_current_period_end",
-                    "stripe_product_id",
-                    "current_period_end",
-                ),
-                Index(
-                    "ix_stripe_subscriptions_stripe_subscription_item_id",
-                    "stripe_subscription_item_id",
-                ),
+                Index("ix_stripe_subscriptions_stripe_product_id", "stripe_product_id"),
             )
-            stripe_subscription_item_id: Mapped[str] = mapped_column(String)
+            stripe_subscription_item_id: Mapped[str] = mapped_column(
+                String, unique=True
+            )
             stripe_product_id: Mapped[str] = mapped_column(String)
             customer_id: Mapped[uuid.UUID] = mapped_column(
                 ForeignKey(f"{Customer.__tablename__}.{Customer.id.key}")
@@ -134,3 +99,17 @@ class Models:
 
         self.Customer = Customer
         self.Subscription = Subscription
+
+
+class UserLike(Protocol):
+    id: Mapped[Any]
+
+
+@runtime_checkable
+class HasName(Protocol):
+    name: Mapped[str]
+
+
+@runtime_checkable
+class HasEmail(Protocol):
+    email: Mapped[str]

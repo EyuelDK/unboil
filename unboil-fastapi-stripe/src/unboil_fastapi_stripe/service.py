@@ -47,25 +47,20 @@ class Service:
         db: AsyncSession,
         user_id: Any = UNSET,
         stripe_subscription_item_id: str = UNSET,
-        stripe_product_ids: list[str] = UNSET,
-        max_current_period_end: datetime = UNSET,
+        stripe_product_id_in: list[str] = UNSET,
     ):
         query = select(self.models.Subscription)
         if user_id is not UNSET:
             query = query.where(
                 self.models.Subscription.customer.user_id == user_id,
             )
+        if stripe_product_id_in is not UNSET:
+            query = query.where(
+                self.models.Subscription.stripe_product_id.in_(stripe_product_id_in),
+            )
         if stripe_subscription_item_id is not UNSET:
             query = query.where(
                 self.models.Subscription.stripe_subscription_item_id == stripe_subscription_item_id,
-            )
-        if stripe_product_ids is not UNSET:
-            query = query.where(
-                self.models.Subscription.stripe_product_id.in_(stripe_product_ids),
-            )
-        if max_current_period_end is not UNSET:
-            query = query.where(
-                self.models.Subscription.current_period_end <= max_current_period_end,
             )
         return await fetch_one(db=db, query=query)
 
@@ -82,39 +77,55 @@ class Service:
         return await fetch_all(db=db, query=query)
 
 
-    async def create_subscription(
+    async def create_or_update_subscription(
         self,
         db: AsyncSession,
+        stripe_subscription_item_id: str,
+        stripe_product_id: str,
         customer_id: uuid.UUID,
         current_period_end: datetime | int,
-        stripe_product_id: str,
-        stripe_subscription_item_id: str,
         auto_commit: bool = True,
     ):
         if isinstance(current_period_end, int):
             current_period_end = datetime.fromtimestamp(current_period_end, tz=timezone.utc)
-        subscription = self.models.Subscription(
-            customer_id=customer_id,
-            current_period_end=current_period_end,
-            stripe_product_id=stripe_product_id,
+        subscription = await self.find_subscription(
+            db=db,
             stripe_subscription_item_id=stripe_subscription_item_id,
         )
-        await save(db=db, instances=subscription, auto_commit=auto_commit)
+        if subscription is None:
+            subscription = self.models.Subscription(
+                customer_id=customer_id,
+                current_period_end=current_period_end,
+                stripe_product_id=stripe_product_id,
+                stripe_subscription_item_id=stripe_subscription_item_id,
+            )
+            await save(db=db, instances=subscription, auto_commit=auto_commit)
+        else:
+            subscription.customer_id = customer_id
+            subscription.current_period_end = current_period_end
+            subscription.stripe_product_id = stripe_product_id
+            subscription.stripe_subscription_item_id = stripe_subscription_item_id
+            await save(db=db, instances=subscription, auto_commit=auto_commit)
         return subscription
 
 
-    async def create_subscriptions_from_stripe_subscription(
+    async def create_or_update_subscriptions_from_stripe_subscription(
         self,
         db: AsyncSession,
-        customer_id: uuid.UUID,
         stripe_subscription: stripe.Subscription,
     ):
+        assert isinstance(stripe_subscription.customer, stripe.Customer)
+        customer = await self.find_customer(
+            db=db, stripe_customer_id=stripe_subscription.customer.id
+        )
+        if customer is None:
+            return
         async with db.begin():
             return [
-                await self.create_subscription(
+                await self.create_or_update_subscription(
                     db=db,
                     auto_commit=False,
-                    customer_id=customer_id,
+                    customer_id=customer.id,
                     stripe_product_id=item.price.product.id,
                     stripe_subscription_item_id=item.id,
                     current_period_end=item.current_period_end,
@@ -122,28 +133,6 @@ class Service:
                 for item in stripe_subscription.items.data
                 if isinstance(item.price.product, stripe.Product)
             ]
-
-
-    async def update_subscriptions_from_stripe_subscription(
-        self,
-        db: AsyncSession,
-        stripe_subscription: stripe.Subscription,
-    ):
-        subscriptions = []
-        for item in stripe_subscription.items.data:
-            assert isinstance(item.price.product, stripe.Product)
-            subscription = await self.find_subscription(
-                db=db, stripe_subscription_item_id=item.id
-            )
-            if subscription is None:
-                continue
-            subscription.stripe_product_id = item.price.product.id
-            subscription.current_period_end = datetime.fromtimestamp(
-                item.current_period_end, tz=timezone.utc
-            )
-            subscriptions.append(subscription)
-        await save(db=db, instances=subscriptions)
-
 
     async def delete_subscriptions_from_stripe_subscription(
         self,

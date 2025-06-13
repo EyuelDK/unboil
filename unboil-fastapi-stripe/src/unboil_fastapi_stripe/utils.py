@@ -1,9 +1,18 @@
-from typing import Any, Awaitable, Callable, Literal, Union, TypeVar
+from typing import Any, AsyncGenerator, Awaitable, Callable, Literal, ParamSpec, Union, TypeVar
 from fastapi import Depends
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 T = TypeVar("T")
+TParams = ParamSpec("TParams")
+
+def InferDepends(
+    func: Union[
+        Callable[TParams, T], 
+        Callable[TParams, Awaitable[T]],
+        Callable[TParams, AsyncGenerator[T, Any]],
+    ]) -> T:
+    return Depends(func)
 
 def make_literal(*values: str) -> Any:
     return Literal[*values]  # type: ignore
