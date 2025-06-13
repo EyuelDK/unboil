@@ -1,5 +1,5 @@
 import stripe
-from aiocache import Cache, cached
+from cachetools import TTLCache
 from datetime import datetime, timezone
 from typing import Any, TypeVar
 import uuid
@@ -13,21 +13,23 @@ from unboil_fastapi_stripe.utils import delete, fetch_all, fetch_one, paginate, 
 T = TypeVar("T")
 UNSET: Any = object()
 
-
-
 class Service:
     
     def __init__(self, models: Models, config: Config):
         self.models = models
         self.config = config
+        self._fetch_price_cache = TTLCache(ttl=60)
         
-    @cached(ttl=60)
-    async def fetch_price(self, price_id: str):
-        return await stripe.Price.retrieve_async(
+    async def fetch_price(self, price_id: str) -> stripe.Price:
+        if price_id in self._fetch_price_cache:
+            return self._fetch_price_cache[price_id]
+        result = await stripe.Price.retrieve_async(
             api_key=self.config.stripe_api_key,
             id=price_id,
         )
-    
+        self._fetch_price_cache[price_id] = result
+        return result
+
     async def find_subscription(
         self,
         db: AsyncSession | Session,
@@ -113,9 +115,12 @@ class Service:
         db: AsyncSession,
         stripe_subscription: stripe.Subscription,
     ):
-        assert isinstance(stripe_subscription.customer, stripe.Customer)
+        if isinstance(stripe_subscription.customer, stripe.Customer):
+            stripe_customer_id = stripe_subscription.customer.id
+        else:
+            stripe_customer_id = stripe_subscription.customer
         customer = await self.find_customer(
-            db=db, stripe_customer_id=stripe_subscription.customer.id
+            db=db, stripe_customer_id=stripe_customer_id
         )
         if customer is None:
             return
@@ -132,6 +137,7 @@ class Service:
                 for item in stripe_subscription.items.data
                 if isinstance(item.price.product, stripe.Product)
             ]
+
 
     async def delete_subscriptions_from_stripe_subscription(
         self,
