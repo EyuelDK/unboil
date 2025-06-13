@@ -76,7 +76,7 @@ async def paginate(
     query: Select[tuple[T]],
     offset: int = 0,
     limit: int | None = None
-):
+) -> PaginatedResult[T]:
     count_query = select(func.count()).select_from(query.alias())
     if isinstance(db, AsyncSession):
         total = (await db.execute(count_query)).scalar()

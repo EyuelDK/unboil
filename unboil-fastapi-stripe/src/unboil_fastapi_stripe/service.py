@@ -21,32 +21,6 @@ class Service:
         self.models = models
         self.config = config
     
-    async def ensure_webhook_endpoint(self, url: str):
-        endpoint = await self.find_webhook_endpoint(url=url)
-        if endpoint is not None:
-            return endpoint
-        return await stripe.WebhookEndpoint.create_async(
-            api_key=self.config.stripe_api_key,
-            url=url,
-            enabled_events=["*"],
-        )
-
-    async def find_webhook_endpoint(self, url: str):
-        starting_after = ""
-        while True:
-            response = await stripe.WebhookEndpoint.list_async(
-                api_key=self.config.stripe_api_key,
-                limit=100, 
-                starting_after=starting_after
-            )
-            for endpoint in response.data:
-                if endpoint.url == url:
-                    return endpoint
-            if not response.has_more:
-                return
-            starting_after = response.data[-1].id
-    
-    
     @cached(ttl=60)
     async def find_price(self, price_id: str):
         return await stripe.Price.retrieve_async(
@@ -86,7 +60,9 @@ class Service:
         user_id: Any = UNSET,
         stripe_subscription_item_ids: list[str] = UNSET,
     ):
-        query = select(self.models.Subscription)
+        query = select(self.models.Subscription).order_by(
+            self.models.Subscription.created_at.desc()
+        )
         if user_id is not UNSET:
             query = query.where(
                 self.models.Subscription.customer.has(
