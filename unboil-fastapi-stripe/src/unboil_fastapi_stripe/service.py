@@ -18,7 +18,7 @@ class Service:
     def __init__(self, models: Models, config: Config):
         self.models = models
         self.config = config
-        self._fetch_price_cache = TTLCache(ttl=60)
+        self._fetch_price_cache = TTLCache(maxsize=100, ttl=60)
         
     async def fetch_price(self, price_id: str) -> stripe.Price:
         if price_id in self._fetch_price_cache:
