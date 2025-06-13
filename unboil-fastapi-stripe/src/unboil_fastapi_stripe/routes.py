@@ -20,7 +20,7 @@ def create_router(
         
     router = APIRouter(prefix="/stripe", tags=["Stripe"])
 
-    @router.post("/prices/{priceId}")
+    @router.get("/prices/{priceId}")
     async def get_price(priceId: str) -> PriceResponse:
         price = await service.find_price(price_id=priceId)
         unit_amount = Decimal(price.unit_amount or 0) / Decimal(100)
@@ -61,7 +61,7 @@ def create_router(
         )
 
 
-    @router.post("/webhook")
+    @router.post("/webhook", include_in_schema=False)
     async def webhook(
         request: Request,
         stripe_signature: Annotated[str, Header(alias="stripe-signature")],
