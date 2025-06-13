@@ -4,11 +4,13 @@ import stripe.webhook
 from typing import Annotated, Awaitable, Callable
 from fastapi import APIRouter, Body, Depends, HTTPException, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from unboil_fastapi_stripe import schemas
 from unboil_fastapi_stripe.config import Config
 from unboil_fastapi_stripe.dependencies import Dependencies
 from unboil_fastapi_stripe.models import HasEmail, HasName, UserLike
-from unboil_fastapi_stripe.schemas import CheckoutSessionResponse, CheckoutSessionRequest, PriceResponse
+from unboil_fastapi_stripe.schemas import CheckoutSessionResponse, CheckoutSessionRequest, PaginatedResponse, PriceResponse
 from unboil_fastapi_stripe.service import Service
+from unboil_fastapi_stripe.utils import InferDepends
 
 __all__ = ["create_router"]
 
@@ -27,12 +29,29 @@ def create_router(
             currency=price.currency,
             amount=float(f"{(price.unit_amount or 0) / 100:.2f}"),
         )
+        
+    @router.get("/user/subscriptions")
+    async def list_user_subscriptions(
+        db = InferDepends(dependencies.get_db),
+        user = InferDepends(dependencies.require_user),
+    ) -> PaginatedResponse[schemas.Subscription]:
+        subscriptions = await service.list_subscriptions(
+            db=db,
+            user_id=user.id,
+        )
+        return PaginatedResponse.from_result(
+            result=subscriptions,
+            transform=lambda subscription: schemas.Subscription(
+                stripeProductId=subscription.stripe_product_id,
+                currentPeriodEnd=subscription.current_period_end,
+            )
+        )
 
     @router.post("/checkout")
     async def checkout_session(
-        request: Annotated[CheckoutSessionRequest, Body()],
-        db: Annotated[AsyncSession, Depends(dependencies.get_db)],
-        user: Annotated[UserLike, Depends(dependencies.require_user)],
+        request: CheckoutSessionRequest = Body(),
+        db = InferDepends(dependencies.get_db),
+        user = InferDepends(dependencies.require_user),
     ) -> CheckoutSessionResponse:
         customer = await service.ensure_customer(
             db=db,

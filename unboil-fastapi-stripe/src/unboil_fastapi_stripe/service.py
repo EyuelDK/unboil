@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from unboil_fastapi_stripe.config import Config
 from unboil_fastapi_stripe.models import Models
-from unboil_fastapi_stripe.utils import delete, fetch_all, fetch_one, save
+from unboil_fastapi_stripe.utils import delete, fetch_all, fetch_one, paginate, save
 
 T = TypeVar("T")
 UNSET: Any = object()
@@ -78,15 +78,20 @@ class Service:
 
     async def list_subscriptions(
         self,
-        db: AsyncSession,
+        db: AsyncSession | Session,
+        user_id: Any = UNSET,
         stripe_subscription_item_ids: list[str] = UNSET,
     ):
         query = select(self.models.Subscription)
+        if user_id is not UNSET:
+            query = query.where(
+                self.models.Subscription.customer.user_id == user_id,
+            )
         if stripe_subscription_item_ids is not UNSET:
             query = query.where(
                 self.models.Subscription.stripe_subscription_item_id.in_(stripe_subscription_item_ids),
             )
-        return await fetch_all(db=db, query=query)
+        return await paginate(db=db, query=query)
 
 
     async def create_or_update_subscription(
@@ -164,7 +169,7 @@ class Service:
 
     async def create_customer(
         self, 
-        db: AsyncSession,
+        db: AsyncSession | Session,
         user_id: Any,
         name: str | None = None,
         email: str | None = None,
@@ -184,7 +189,7 @@ class Service:
 
     async def find_customer(
         self, 
-        db: AsyncSession, 
+        db: AsyncSession | Session, 
         user_id: Any = UNSET,
         stripe_customer_id: str = UNSET,
     ):
@@ -201,7 +206,7 @@ class Service:
 
     async def ensure_customer(
         self,
-        db: AsyncSession,
+        db: AsyncSession | Session,
         user_id: Any,
         name: str | None = None,
         email: str | None = None,

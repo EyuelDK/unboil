@@ -1,6 +1,7 @@
-from typing import Any, AsyncGenerator, Awaitable, Callable, Literal, ParamSpec, Union, TypeVar
+from dataclasses import dataclass
+from typing import Any, AsyncGenerator, Awaitable, Callable, Generic, Literal, ParamSpec, Union, TypeVar
 from fastapi import Depends
-from sqlalchemy import Select
+from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,3 +61,39 @@ async def delete(db: AsyncSession | Session, instances: object | list[object], a
         db.delete(instances)
         if auto_commit:
             db.commit()
+
+
+@dataclass(kw_only=True)
+class PaginatedResult(Generic[T]):
+    has_more: bool
+    total: int
+    offset: int
+    limit: int | None
+    items: list[T]
+
+async def paginate(
+    db: AsyncSession | Session,
+    query: Select[tuple[T]],
+    offset: int = 0,
+    limit: int | None = None
+):
+    count_query = select(func.count()).select_from(query.alias())
+    if isinstance(db, AsyncSession):
+        total = (await db.execute(count_query)).scalar()
+    else:
+        total = db.execute(count_query).scalar()
+    query = query.offset(offset)
+    if limit is not None:
+        query = query.limit(limit + 1)
+    if isinstance(db, AsyncSession):
+        results = (await db.execute(query)).scalars().all()
+    else:
+        results = db.execute(query).scalars().all()
+    has_more = limit is not None and len(results) > limit
+    return PaginatedResult(
+        has_more=has_more,
+        total=total or 0,
+        limit=limit,
+        offset=offset,
+        items=list(results[:-1]) if has_more else list(results),
+    )
