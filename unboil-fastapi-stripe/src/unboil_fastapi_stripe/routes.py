@@ -26,7 +26,7 @@ def create_router(
         unit_amount = Decimal(price.unit_amount or 0) / Decimal(100)
         return PriceResponse(
             currency=price.currency,
-            unit_amount=unit_amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            unitAmount=unit_amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
         )
 
     @router.post("/checkout")

@@ -13,5 +13,5 @@ class CheckoutSessionResponse(BaseModel):
     checkoutSessionUrl: str
     
 class PriceResponse(BaseModel):
-    unit_amount: Decimal
+    unitAmount: Decimal
     currency: str
