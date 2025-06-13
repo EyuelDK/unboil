@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Awaitable, Callable
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from unboil_fastapi_stripe.models import UserLike
 from unboil_fastapi_stripe.service import Service
 from unboil_fastapi_stripe.utils import InferDepends
@@ -11,7 +12,7 @@ class Dependencies:
     def __init__(
         self,
         service: Service,
-        session_maker: async_sessionmaker[AsyncSession],
+        session_maker: async_sessionmaker[AsyncSession] | sessionmaker[Session],
         require_user: Callable[..., UserLike] | Callable[..., Awaitable[UserLike]],
     ):
         self.service = service
@@ -19,11 +20,18 @@ class Dependencies:
         self.require_user = require_user
 
     async def get_db(self):
-        async with self.session_maker() as session:
-            try:
-                yield session
-            finally:
-                await session.close()
+        if isinstance(self.session_maker, async_sessionmaker):
+            async with self.session_maker() as session:
+                try:
+                    yield session
+                finally:
+                    await session.close()
+        else:
+            with self.session_maker() as session:
+                try:
+                    yield session
+                finally:
+                    session.close()
 
     def get_subscription(self, product_ids: list[str]):
         async def dependency(

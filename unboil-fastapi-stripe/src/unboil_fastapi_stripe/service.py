@@ -4,7 +4,7 @@ from typing import Any, TypeVar
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
+from sqlalchemy.orm import Session
 from unboil_fastapi_stripe.models import Models
 from unboil_fastapi_stripe.utils import delete, fetch_all, fetch_one, save
 
@@ -44,7 +44,7 @@ class Service:
     
     async def find_subscription(
         self,
-        db: AsyncSession,
+        db: AsyncSession | Session,
         user_id: Any = UNSET,
         stripe_subscription_item_id: str = UNSET,
         stripe_product_id_in: list[str] = UNSET,

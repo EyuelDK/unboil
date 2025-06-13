@@ -3,6 +3,7 @@ import stripe.webhook
 from typing import Annotated, Awaitable, Callable
 from fastapi import APIRouter, Body, Depends, HTTPException, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from unboil_fastapi_stripe.config import Config
 from unboil_fastapi_stripe.dependencies import Dependencies
 from unboil_fastapi_stripe.models import HasEmail, HasName, UserLike
 from unboil_fastapi_stripe.schemas import CheckoutSessionResponse, CheckoutSession
@@ -11,7 +12,7 @@ from unboil_fastapi_stripe.service import Service
 __all__ = ["create_router"]
 
 def create_router(
-    stripe_webhook_secret: str,
+    config: Config,
     service: Service,
     dependencies: Dependencies,
 ):
@@ -58,7 +59,7 @@ def create_router(
             event = stripe.Webhook.construct_event(
                 payload=payload,
                 sig_header=stripe_signature,
-                secret=stripe_webhook_secret,
+                secret=config.stripe_webhook_secret,
             )
         except (ValueError, stripe.SignatureVerificationError) as e:
             raise HTTPException(status_code=400, detail="Invalid Stripe webhook")

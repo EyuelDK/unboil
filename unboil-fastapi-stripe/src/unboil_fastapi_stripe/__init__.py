@@ -1,9 +1,10 @@
 from typing import Any, Awaitable, Callable, Literal, Protocol, Type, TypedDict
 from fastapi import FastAPI
 from sqlalchemy import MetaData
-from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import Mapped, sessionmaker, Session
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from unboil_fastapi_stripe.config import Config
 from unboil_fastapi_stripe.dependencies import Dependencies
 from unboil_fastapi_stripe.models import Models, UserLike
 from unboil_fastapi_stripe.routes import create_router
@@ -18,13 +19,15 @@ class Stripe:
     def __init__(
         self, 
         metadata: MetaData, 
-        session_maker: async_sessionmaker[AsyncSession], 
+        session_maker: async_sessionmaker[AsyncSession] | sessionmaker[Session], 
         stripe_api_key: str,
         stripe_webhook_secret: str,
         user_model: Type[UserModel],
         require_user: Callable[..., UserLike] | Callable[..., Awaitable[UserLike]]
     ):
-        self.stripe_webhook_secret = stripe_webhook_secret
+        self.config = Config(
+            stripe_webhook_secret=stripe_webhook_secret
+        )
         self.models = Models(
             metadata=metadata,
             user_foreign_key=f"{user_model.__tablename__}.{user_model.id.key}",
@@ -41,7 +44,7 @@ class Stripe:
         
     async def on_startup(self, app: FastAPI):
         router = create_router(
-            stripe_webhook_secret=self.stripe_webhook_secret,
+            config=self.config,
             service=self.service,
             dependencies=self.dependencies,
         )
