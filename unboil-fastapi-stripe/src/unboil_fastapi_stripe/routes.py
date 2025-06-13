@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unboil_fastapi_stripe.config import Config
 from unboil_fastapi_stripe.dependencies import Dependencies
 from unboil_fastapi_stripe.models import HasEmail, HasName, UserLike
-from unboil_fastapi_stripe.schemas import CheckoutSessionResponse, CheckoutSession
+from unboil_fastapi_stripe.schemas import CheckoutSessionResponse, CheckoutSessionRequest
 from unboil_fastapi_stripe.service import Service
 
 __all__ = ["create_router"]
@@ -21,7 +21,7 @@ def create_router(
 
     @router.post("/checkout")
     async def checkout_session(
-        request: Annotated[CheckoutSession, Body()],
+        request: Annotated[CheckoutSessionRequest, Body()],
         db: Annotated[AsyncSession, Depends(dependencies.get_db)],
         user: Annotated[UserLike, Depends(dependencies.require_user)],
     ) -> CheckoutSessionResponse:
@@ -32,8 +32,8 @@ def create_router(
             email=user.email if isinstance(user, HasEmail) else None,
         )
         checkout_session = stripe.checkout.Session.create(
-            success_url=request.success_url,
-            cancel_url=request.cancel_url,
+            success_url=request.successUrl,
+            cancel_url=request.cancelUrl,
             customer=customer.stripe_customer_id,
             mode=request.type,
             line_items=[
@@ -41,11 +41,13 @@ def create_router(
                     "quantity": 1,
                     "price": price_id,
                 }
-                for price_id in request.price_ids
+                for price_id in request.priceIds
             ],
         )
         assert checkout_session.url is not None
-        return CheckoutSessionResponse(checkout_session_url=checkout_session.url)
+        return CheckoutSessionResponse(
+            checkoutSessionUrl=checkout_session.url
+        )
 
 
     @router.post("/webhook")
