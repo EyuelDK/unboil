@@ -24,7 +24,7 @@ def create_router(
         request: Annotated[CheckoutSession, Body()],
         db: Annotated[AsyncSession, Depends(dependencies.get_db)],
         user: Annotated[UserLike, Depends(dependencies.require_user)],
-    ):
+    ) -> CheckoutSessionResponse:
         customer = await service.ensure_customer(
             db=db,
             user_id=user.id,

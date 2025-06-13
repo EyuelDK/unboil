@@ -1,17 +1,23 @@
-from typing import Any, Protocol, TypeVar, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 import uuid
 from datetime import datetime
 from sqlalchemy import (
     UUID,
+    TypeDecorator,
+    Uuid,
     DateTime,
     ForeignKey,
     Index,
     String,
-    UniqueConstraint,
     func,
     MetaData,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+    DeclarativeBase,
+)
 
 __all__ = [
     "Models",
@@ -19,7 +25,6 @@ __all__ = [
     "HasName",
     "HasEmail",
 ]
-
 
 class Models:
 
@@ -36,7 +41,7 @@ class Models:
 
         class Identifiable:
             id: Mapped[uuid.UUID] = mapped_column(
-                UUID(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4()
+                Uuid(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4()
             )
 
         class Timestamped:
