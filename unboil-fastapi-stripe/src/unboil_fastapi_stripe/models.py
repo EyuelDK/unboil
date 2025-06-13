@@ -63,15 +63,13 @@ class Models:
                 Index("ix_stripe_customers_stripe_customer_id", "stripe_customer_id"),
                 Index("ix_stripe_customers_user_id", "user_id"),
             )
-            stripe_customer_id: Mapped[str] = mapped_column(String, unique=True)
-            user_id: Mapped[Any] = mapped_column(
-                ForeignKey(user_foreign_key), unique=True
-            )
+            stripe_customer_id: Mapped[str] = mapped_column(String(255), unique=True)
+            user_id: Mapped[Any] = mapped_column(ForeignKey(user_foreign_key), unique=True)
             subscriptions: Mapped[list["Subscription"]] = relationship()
 
-            def __init__(self, user_id: Any, stripe_customer_id: str):
-                self.user_id = user_id
+            def __init__(self, stripe_customer_id: str, user_id: Any):
                 self.stripe_customer_id = stripe_customer_id
+                self.user_id = user_id
 
         class Subscription(Base, Identifiable, Timestamped):
             __tablename__ = "stripe_subscriptions"
