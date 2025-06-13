@@ -32,6 +32,7 @@ def create_router(
             email=user.email if isinstance(user, HasEmail) else None,
         )
         checkout_session = stripe.checkout.Session.create(
+            api_key=config.stripe_api_key,
             success_url=request.successUrl,
             cancel_url=request.cancelUrl,
             customer=customer.stripe_customer_id,
