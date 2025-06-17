@@ -1,6 +1,6 @@
 [project]
 name = "unboil-fastapi-stripe"
-version = "0.1.18"
+version = "0.1.19"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -24,3 +24,6 @@ build-backend = "hatchling.build"
 [tool.uv.sources]
 unboil-utils-fastapi = { path = "../unboil-utils-fastapi" }
 unboil-utils-sqlalchemy = { path = "../unboil-utils-sqlalchemy" }
+
+[tool.hatch.metadata]
+allow-direct-references = true
