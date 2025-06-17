@@ -343,7 +343,7 @@ wheels = [
 
 [[package]]
 name = "unboil-fastapi-stripe"
-version = "0.1.18"
+version = "0.1.19"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
@@ -364,31 +364,25 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
     { name = "stripe", specifier = ">=12.0.0" },
-    { name = "unboil-utils-fastapi", directory = "../unboil-utils-fastapi" },
-    { name = "unboil-utils-sqlalchemy", directory = "../unboil-utils-sqlalchemy" },
+    { name = "unboil-utils-fastapi", git = "https://github.com/EyuelDK/unboil-fastapi.git?subdirectory=unboil-utils-fastapi&rev=main" },
+    { name = "unboil-utils-sqlalchemy", git = "https://github.com/EyuelDK/unboil-fastapi.git?subdirectory=unboil-utils-sqlalchemy&rev=main" },
 ]
 
 [[package]]
 name = "unboil-utils-fastapi"
 version = "0.1.2"
-source = { directory = "../unboil-utils-fastapi" }
+source = { git = "https://github.com/EyuelDK/unboil-fastapi.git?subdirectory=unboil-utils-fastapi&rev=main#b8c22555d3c893c8f230554ec039c19f336b89b0" }
 dependencies = [
     { name = "fastapi" },
 ]
 
-[package.metadata]
-requires-dist = [{ name = "fastapi", specifier = ">=0.60.0" }]
-
 [[package]]
 name = "unboil-utils-sqlalchemy"
 version = "0.1.0"
-source = { directory = "../unboil-utils-sqlalchemy" }
+source = { git = "https://github.com/EyuelDK/unboil-fastapi.git?subdirectory=unboil-utils-sqlalchemy&rev=main#b8c22555d3c893c8f230554ec039c19f336b89b0" }
 dependencies = [
     { name = "sqlalchemy" },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "sqlalchemy", specifier = ">=2.0.0" }]
 
 [[package]]
 name = "urllib3"
