@@ -1,0 +1,16 @@
+[project]
+name = "unboil-utils-sqlalchemy"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "eyueldk" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
