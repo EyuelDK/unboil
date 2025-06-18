@@ -53,32 +53,31 @@ def InferDepends(
 ) -> T:
     return Depends(func)
 
+RouteEventListener = Callable[P, Callable[..., None | Awaitable]]
 
 class RouteEvent(Generic[P]):
 
     def __init__(self):
-        self.listeners: list[Callable[P, None | Awaitable]] = []
+        self.listeners: list[RouteEventListener[P]] = []
 
-    def __call__(self, listener: Callable[P, None | Awaitable]):
+    def __call__(self, listener: RouteEventListener[P]):
         self.register(listener)
         return listener
 
     def has_listener(self) -> bool:
         return len(self.listeners) > 0
 
-    def register(self, listener: Callable[P, None | Awaitable]):
+    def register(self, listener: RouteEventListener[P]):
         self.listeners.append(listener)
 
-    def unregister(self, listener: Callable[P, None | Awaitable]):
+    def unregister(self, listener: RouteEventListener[P]):
         self.listeners.remove(listener)
 
     def ainvokable(self, request: Request) -> Callable[P, Awaitable]:
         async def invokable(*args: P.args, **kwargs: P.kwargs):
             for listener in self.listeners:
-                signature = inspect.signature(listener)
-                bound = signature.bind_partial(*args, **kwargs)
                 await invoke_with_dependencies(
-                    partial(listener, *bound.args, **bound.kwargs), request
+                    listener(*args, **kwargs), request
                 )
 
         return invokable
