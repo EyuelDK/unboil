@@ -1,4 +1,5 @@
 from contextlib import AsyncExitStack
+from functools import partial
 import inspect
 from typing import (
     Any,
@@ -26,8 +27,6 @@ async def invoke_with_dependencies(
     handler: Callable[..., T | Awaitable[T]],
     request: Request,
     path: str = "/",
-    override_args: Iterable[Any] = [],
-    override_kwargs: dict[str, Any] = {},
 ) -> T:
     dependant = get_dependant(path=path, call=handler)
     async with AsyncExitStack() as stack:
@@ -37,7 +36,7 @@ async def invoke_with_dependencies(
             async_exit_stack=stack,
             embed_body_fields=False,
         )
-        result = handler(*override_args, **solved.values, **override_kwargs)
+        result = handler(**solved.values)
     if inspect.isawaitable(result):
         return await result
     else:
@@ -76,8 +75,10 @@ class RouteEvent(Generic[P]):
     def ainvokable(self, request: Request) -> Callable[P, Awaitable]:
         async def invokable(*args: P.args, **kwargs: P.kwargs):
             for listener in self.listeners:
+                signature = inspect.signature(listener)
+                bound = signature.bind_partial(*args, **kwargs)
                 await invoke_with_dependencies(
-                    listener, request, override_args=args, override_kwargs=kwargs
+                    partial(listener, *bound.args, **bound.kwargs), request
                 )
 
         return invokable
