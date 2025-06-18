@@ -6,6 +6,7 @@ from typing import (
     Awaitable,
     Callable,
     Concatenate,
+    Generator,
     Generic,
     ParamSpec,
     TypeVar,
@@ -45,6 +46,7 @@ def InferDepends(
         Callable[P, T],
         Callable[P, Awaitable[T]],
         Callable[P, AsyncGenerator[T, Any]],
+        Callable[P, Generator[T, Any, Any]],
     ],
 ) -> T:
     return Depends(func)
