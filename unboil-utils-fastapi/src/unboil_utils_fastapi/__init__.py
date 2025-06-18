@@ -8,6 +8,7 @@ from typing import (
     Concatenate,
     Generator,
     Generic,
+    Iterable,
     ParamSpec,
     TypeVar,
     Union,
@@ -25,6 +26,8 @@ async def invoke_with_dependencies(
     handler: Callable[..., T | Awaitable[T]],
     request: Request,
     path: str = "/",
+    override_args: Iterable[Any] = [],
+    override_kwargs: dict[str, Any] = {},
 ) -> T:
     dependant = get_dependant(path=path, call=handler)
     async with AsyncExitStack() as stack:
@@ -34,7 +37,7 @@ async def invoke_with_dependencies(
             async_exit_stack=stack,
             embed_body_fields=False,
         )
-        result = handler(**solved.values)
+        result = handler(*override_args, **solved.values, **override_kwargs)
     if inspect.isawaitable(result):
         return await result
     else:
@@ -69,11 +72,12 @@ class RouteEvent(Generic[P]):
 
     def unregister(self, listener: Callable[P, None | Awaitable]):
         self.listeners.remove(listener)
-            
+
     def ainvokable(self, request: Request) -> Callable[P, Awaitable]:
         async def invokable(*args: P.args, **kwargs: P.kwargs):
             for listener in self.listeners:
                 await invoke_with_dependencies(
-                    lambda **deps: listener(*args, **{ **deps, **kwargs }), request
+                    listener, request, override_args=args, override_kwargs=kwargs
                 )
+
         return invokable
