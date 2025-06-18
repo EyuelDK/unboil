@@ -1,6 +1,6 @@
 [project]
 name = "unboil-fastapi-stripe"
-version = "0.1.30"
+version = "0.1.31"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -13,8 +13,8 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "sqlalchemy>=2.0.0",
     "stripe>=12.0.0",
-    "unboil-utils-fastapi @ git+https://github.com/EyuelDK/unboil-fastapi.git@612436b6a011ea37bf95495d48ca2cbdaf63c5f6#subdirectory=unboil-utils-fastapi",
-    "unboil-utils-sqlalchemy @ git+https://github.com/EyuelDK/unboil-fastapi.git@612436b6a011ea37bf95495d48ca2cbdaf63c5f6#subdirectory=unboil-utils-sqlalchemy",
+    "unboil-utils-fastapi @ git+https://github.com/EyuelDK/unboil-fastapi.git@8810d9f58f8186442c45ddd4f054d2dfbc147d30#subdirectory=unboil-utils-fastapi",
+    "unboil-utils-sqlalchemy @ git+https://github.com/EyuelDK/unboil-fastapi.git@8810d9f58f8186442c45ddd4f054d2dfbc147d30#subdirectory=unboil-utils-sqlalchemy",
 ]
 
 [build-system]
