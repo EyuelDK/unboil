@@ -17,7 +17,10 @@ class Stripe:
             stripe_api_key=stripe_api_key,
             stripe_webhook_secret=stripe_webhook_secret,
         )
-        self.router = create_router(
+        
+    async def on_startup(self, app: FastAPI):
+        router = create_router(
             events=self.events,
             config=self.config,
         )
+        app.include_router(router, prefix="/api")
