@@ -13,10 +13,14 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "sqlalchemy>=2.0.0",
     "stripe>=12.0.0",
-    "unboil-utils-fastapi @ git+https://github.com/EyuelDK/unboil-fastapi.git@8810d9f58f8186442c45ddd4f054d2dfbc147d30#subdirectory=unboil-utils-fastapi",
-    "unboil-utils-sqlalchemy @ git+https://github.com/EyuelDK/unboil-fastapi.git@8810d9f58f8186442c45ddd4f054d2dfbc147d30#subdirectory=unboil-utils-sqlalchemy",
+    "unboil-utils-fastapi",
+    "unboil-utils-sqlalchemy",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv.sources]
+unboil-utils-fastapi = { git = "https://github.com/EyuelDK/unboil-fastapi.git", subdirectory = "unboil-utils-fastapi", rev = "bf62a473e03fc9b9faf5af3d590f77f085cfe580" }
+unboil-utils-sqlalchemy = { git = "https://github.com/EyuelDK/unboil-fastapi.git", subdirectory = "unboil-utils-sqlalchemy", rev = "bf62a473e03fc9b9faf5af3d590f77f085cfe580" }
