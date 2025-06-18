@@ -1,6 +1,6 @@
 [project]
 name = "unboil-fastapi-stripe"
-version = "0.1.20"
+version = "0.1.21"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -22,5 +22,5 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv.sources]
-unboil-utils-fastapi = { git = "https://github.com/EyuelDK/unboil-fastapi.git", subdirectory = "unboil-utils-fastapi", rev = "b8c22555d3c893c8f230554ec039c19f336b89b0" }
-unboil-utils-sqlalchemy = { git = "https://github.com/EyuelDK/unboil-fastapi.git", subdirectory = "unboil-utils-sqlalchemy", rev = "b8c22555d3c893c8f230554ec039c19f336b89b0" }
+unboil-utils-fastapi = { git = "https://github.com/EyuelDK/unboil-fastapi.git", subdirectory = "unboil-utils-fastapi", rev = "abcd0dd44254fdeda5a6bf3390e6a0fa07ba06d6" }
+unboil-utils-sqlalchemy = { git = "https://github.com/EyuelDK/unboil-fastapi.git", subdirectory = "unboil-utils-sqlalchemy", rev = "abcd0dd44254fdeda5a6bf3390e6a0fa07ba06d6" }
