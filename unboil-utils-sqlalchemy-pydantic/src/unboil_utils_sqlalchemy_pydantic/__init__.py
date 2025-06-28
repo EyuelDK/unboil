@@ -5,7 +5,7 @@ from sqlalchemy import JSON, Dialect, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
 
 
-class PydanticModel(TypeDecorator):
+class PydanticTypeDecorator(TypeDecorator):
     impl = JSONB
     cache_ok = True  # Performance hint
 
