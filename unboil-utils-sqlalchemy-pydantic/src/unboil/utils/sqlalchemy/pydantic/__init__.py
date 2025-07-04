@@ -30,6 +30,6 @@ class PydanticTypeDecorator(TypeDecorator):
             return None
         return self.adapter.validate_python(value)
     
-    def __repr__(self) -> str:
-        # Used by alembic
-        return f"PydanticModel({self.pydantic_type.__name__})"
+    # def __repr__(self) -> str:
+    #     # Used by alembic
+    #     return f"PydanticModel({self.pydantic_type.__name__})"
