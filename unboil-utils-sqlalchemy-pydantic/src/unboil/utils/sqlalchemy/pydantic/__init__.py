@@ -1,11 +1,12 @@
 from typing import Any
 
 from pydantic import TypeAdapter
-from sqlalchemy import JSON, Dialect, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, Dialect, TypeDecorator
 
 
 class PydanticTypeDecorator(TypeDecorator):
+    impl = JSON
     cache_ok = True  # Performance hint
 
     def __init__(self, pydantic_type: type[Any]):
