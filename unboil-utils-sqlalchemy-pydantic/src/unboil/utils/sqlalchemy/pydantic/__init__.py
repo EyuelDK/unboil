@@ -6,7 +6,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 
 class PydanticTypeDecorator(TypeDecorator):
-    impl = JSONB
     cache_ok = True  # Performance hint
 
     def __init__(self, pydantic_type: type[Any]):
@@ -30,6 +29,7 @@ class PydanticTypeDecorator(TypeDecorator):
             return None
         return self.adapter.validate_python(value)
     
-    # def __repr__(self) -> str:
-    #     # Used by alembic
-    #     return f"PydanticModel({self.pydantic_type.__name__})"
+
+    def __repr__(self) -> str:
+        # Used by alembic
+        return repr(self.impl)
