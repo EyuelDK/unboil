@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from unboil.fastapi.core.config import Config
-from unboil.fastapi.core.dependencies import Dependencies
-from unboil.fastapi.core.events import Events
-from unboil.fastapi.core.models import Models
+from .config import Config
+from .dependencies import Dependencies
+from .events import Events
+from .models import Models
+from .services import Services
 
 class Core:
     
@@ -13,7 +13,8 @@ class Core:
         self.config = Config(database_url=database_url)
         self.events = Events()
         self.models = Models()
-        self.dependencies = Dependencies(self.config)
+        self.services = Services(self.config)
+        self.dependencies = Dependencies(self.services)
         
     @asynccontextmanager
     async def lifespan(self, app: FastAPI):
