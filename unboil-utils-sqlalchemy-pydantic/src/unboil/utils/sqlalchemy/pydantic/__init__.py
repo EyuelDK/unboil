@@ -5,20 +5,16 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import JSON, Dialect, TypeDecorator
 
 
-class PydanticTypeDecorator(TypeDecorator):
-    impl = JSON
+class PydanticJSONB(TypeDecorator):
+    
+    impl = JSONB
     cache_ok = True  # Performance hint
+    __module__ = "sqlalchemy.dialects.postgresql" # for alembic
 
     def __init__(self, pydantic_type: type[Any]):
         super().__init__()
         self.pydantic_type = pydantic_type
         self.adapter = TypeAdapter(pydantic_type)
-
-    def load_dialect_impl(self, dialect: Dialect):
-        if dialect.name == "postgresql":
-            return dialect.type_descriptor(JSONB())
-        else:
-            return dialect.type_descriptor(JSON())
 
     def process_bind_param(self, value: Any, dialect: Dialect):
         if isinstance(value, self.pydantic_type):
@@ -30,7 +26,6 @@ class PydanticTypeDecorator(TypeDecorator):
             return None
         return self.adapter.validate_python(value)
     
-
+    # for alembic
     def __repr__(self) -> str:
-        # Used by alembic
-        return repr(self.impl)
+        return f"JSONB()"
