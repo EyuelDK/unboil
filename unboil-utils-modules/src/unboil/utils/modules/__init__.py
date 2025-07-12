@@ -21,6 +21,9 @@ def walk_modules(root: Path | str | ModuleType, patterns: str | list[str] | None
             else:
                 if isinstance(patterns, str):
                     patterns = [patterns]
-                for pattern in patterns:
-                    if fnmatch(module_name, pattern):
-                        return module_name
+                is_match = any(
+                    fnmatch(module_name, pattern) 
+                    for pattern in patterns
+                )
+                if is_match:
+                    yield module_name
