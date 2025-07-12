@@ -1,9 +1,21 @@
+import importlib
 from fnmatch import fnmatch
 from pathlib import Path
 from types import ModuleType
 
 
-def walk_modules(root: Path | str | ModuleType, patterns: str | list[str] | None = None):
+def import_modules(
+    root: Path | str | ModuleType, 
+    patterns: str | list[str] | None = None
+):
+    for module_name in walk_modules(root, patterns):
+        importlib.import_module(module_name)
+
+
+def walk_modules(
+    root: Path | str | ModuleType, 
+    patterns: str | list[str] | None = None
+):
     if isinstance(root, ModuleType):
         roots = [Path(item) for item in root.__path__]
     else:
