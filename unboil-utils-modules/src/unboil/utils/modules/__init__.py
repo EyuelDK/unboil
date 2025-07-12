@@ -1,8 +1,9 @@
+from fnmatch import fnmatch
 from pathlib import Path
 from types import ModuleType
 
 
-def walk_modules(root: Path | str | ModuleType):
+def walk_modules(root: Path | str | ModuleType, patterns: str | list[str] | None = None):
     if isinstance(root, ModuleType):
         roots = [Path(item) for item in root.__path__]
     else:
@@ -15,4 +16,11 @@ def walk_modules(root: Path | str | ModuleType):
             if leaf != "__init__":
                 nodes.append(leaf)
             module_name = ".".join(nodes)
-            yield module_name
+            if patterns is None:
+                yield module_name
+            else:
+                if isinstance(patterns, str):
+                    patterns = [patterns]
+                for pattern in patterns:
+                    if fnmatch(module_name, pattern):
+                        return module_name
