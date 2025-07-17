@@ -1,55 +1,72 @@
 import pickle
 import functools
-import asyncio
 from redis import Redis
-from typing import Callable, Optional, TypeVar, ParamSpec, Awaitable, Union
+from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable
 
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def redis_cached(
+def cached(
     client: Redis,
-    key_func: Callable[P, str], 
+    key: str | Callable[P, str],
     expire: Optional[int] = None
-) -> Callable[[Callable[P, Union[R, Awaitable[R]]]], Callable[P, Union[R, Awaitable[R]]]]:
-
-    def get_cached(key: str) -> R | None:
-        cached = client.get(key)
-        if cached is not None:
-            if isinstance(cached, bytes):
-                return pickle.loads(cached)
-            if isinstance(cached, str):
-                encoder = client.get_encoder()
-                return pickle.loads(encoder.encode(cached))
-        return None
-
-    def set_cached(key: str, value: R) -> None:
-        client.set(key, pickle.dumps(value), ex=expire)
-
-    def decorator(func: Callable[P, R]) -> Callable[P, Union[R, Awaitable[R]]]:
-        if asyncio.iscoroutinefunction(func):
-            @functools.wraps(func)
-            async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                key = key_func(*args, **kwargs)
-                cached = get_cached(key)
-                if cached is not None:
-                    return cached
-                result = await func(*args, **kwargs)
-                set_cached(key, result)
-                return result
-            return async_wrapper
-        else:
-            @functools.wraps(func)
-            def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                key = key_func(*args, **kwargs)
-                cached = get_cached(key)
-                if cached is not None:
-                    return cached
-                result = func(*args, **kwargs)
-                set_cached(key, result)
-                return result
-            return sync_wrapper
-
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            if isinstance(key, str):
+                computed_key = key
+            else:
+                computed_key = key(*args, **kwargs)
+            cached = _redis_get(client, computed_key)
+            if cached is not None:
+                return cached
+            result = func(*args, **kwargs)
+            _redis_set(client, computed_key, result, expire)
+            return result
+        return wrapper
     return decorator
+
+
+def acached(
+    client: Redis,
+    key: str | Callable[P, str],
+    expire: Optional[int] = None
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
+    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+        @functools.wraps(func)
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            if isinstance(key, str):
+                computed_key = key
+            else:
+                computed_key = key(*args, **kwargs)
+            cached = _redis_get(client, computed_key)
+            if cached is not None:
+                return cached
+            result = await func(*args, **kwargs)
+            _redis_set(client, computed_key, result, expire)
+            return result
+        return wrapper
+    return decorator
+
+
+def _redis_set(client: Redis, key: str, value: Any, expire: Optional[int]) -> None:
+    client.set(key, pickle.dumps(value), ex=expire)
+
+
+def _redis_get(client: Redis, key: str) -> Optional[Any]:
+    cached = client.get(key)
+    if cached is not None:
+        if isinstance(cached, bytes):
+            data = cached
+        elif isinstance(cached, str):
+            data = client.get_encoder().encode(cached)
+        else:
+            raise ValueError("Unsupported type for cached value")
+        try:
+            return pickle.loads(data)
+        except:
+            return None
+    return None
