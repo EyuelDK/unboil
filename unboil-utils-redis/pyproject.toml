@@ -1,17 +1,19 @@
 [project]
-name = "unboil-utils-asyncio"
-version = "0.1.1"
+name = "unboil-utils-redis"
+version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
     { name = "eyueldk" }
 ]
 requires-python = ">=3.12"
-dependencies = []
-
-[tool.hatch.build]
-packages = ["src/unboil"]
+dependencies = [
+    "redis[hiredis]>=6.2.0",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+packages = ["src/unboil"]
