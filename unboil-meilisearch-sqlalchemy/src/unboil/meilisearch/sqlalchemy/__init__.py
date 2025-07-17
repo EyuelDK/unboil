@@ -22,7 +22,7 @@ def auto_sync(
     )
 
     if to_document is None:
-        to_document = _to_dict
+        to_document = _to_document
 
     index = client.index(index_name)
 
@@ -47,7 +47,7 @@ def auto_sync(
             index.delete_document(document_id)
             
 
-def _to_dict(instance: Any) -> dict[str, Any]:
+def _to_document(instance: Any) -> dict[str, Any]:
     assert isinstance(instance, DeclarativeBase), "Expected instance of DeclarativeBase"
     return {
         c.name: getattr(instance, c.name)
