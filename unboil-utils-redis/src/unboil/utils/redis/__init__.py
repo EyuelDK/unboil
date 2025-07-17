@@ -11,7 +11,7 @@ R = TypeVar("R")
 
 def redis_cached(
     client: Redis,
-    keyf: Callable[P, str], 
+    key_func: Callable[P, str], 
     expire: Optional[int] = None
 ) -> Callable[[Callable[P, Union[R, Awaitable[R]]]], Callable[P, Union[R, Awaitable[R]]]]:
 
@@ -32,7 +32,7 @@ def redis_cached(
         if asyncio.iscoroutinefunction(func):
             @functools.wraps(func)
             async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                key = keyf(*args, **kwargs)
+                key = key_func(*args, **kwargs)
                 cached = get_cached(key)
                 if cached is not None:
                     return cached
@@ -43,7 +43,7 @@ def redis_cached(
         else:
             @functools.wraps(func)
             def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                key = keyf(*args, **kwargs)
+                key = key_func(*args, **kwargs)
                 cached = get_cached(key)
                 if cached is not None:
                     return cached
