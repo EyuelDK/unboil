@@ -6,7 +6,7 @@ from meilisearch import Client
 
 T = TypeVar("T")
 
-def sync(
+def auto_sync(
     model: type[T],
     client: Client,
     primary_key: str = "id",
