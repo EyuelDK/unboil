@@ -8,10 +8,10 @@ T = TypeVar("T")
 
 def sync(
     model: type[T],
-    meili_client: Client,
+    client: Client,
     primary_key: str = "id",
     index_name: str | None = None,
-    to_dict: Callable[[T], dict[str, Any]] | None = None,
+    to_document: Callable[[T], dict[str, Any]] | None = None,
 ):
     if index_name is None:
         index_name = cast(DeclarativeBase, model).__tablename__
@@ -21,26 +21,30 @@ def sync(
         "Provide an index_name or ensure the model has a __tablename__."
     )
 
-    if to_dict is None:
-        to_dict = _to_dict
+    if to_document is None:
+        to_document = _to_dict
 
-    index = meili_client.index(index_name)
+    index = client.index(index_name)
 
     @event.listens_for(model, "after_insert")
     def after_insert(mapper, connection, target: T):
-        doc = to_dict(target)
+        doc = to_document(target)
         index.add_documents([doc])
 
     @event.listens_for(model, "after_update")
     def after_update(mapper, connection, target: T):
-        doc = to_dict(target)
+        doc = to_document(target)
         index.add_documents([doc])
 
     @event.listens_for(model, "after_delete")
     def after_delete(mapper, connection, target: T):
-        pk = getattr(target, primary_key, None)
-        if pk is not None:
-            index.delete_document(str(pk))
+        document_id = getattr(target, primary_key, None)
+        if document_id is not None:
+            assert isinstance(document_id, (str, int)), (
+                f"Primary key '{primary_key}' must be of type str or int, "
+                f"got {type(document_id).__name__}."
+            )
+            index.delete_document(document_id)
             
 
 def _to_dict(instance: Any) -> dict[str, Any]:
