@@ -1,0 +1,20 @@
+[project]
+name = "unboil-meilisearch-sqlalchemy"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "eyueldk" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "meilisearch>=0.36.0",
+    "sqlalchemy>=2.0.41",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+packages = ["src/unboil"]
