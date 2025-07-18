@@ -3,7 +3,7 @@ import math
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy import Select, func, select
-from typing import Generic, Sequence, TypeVar
+from typing import AsyncIterable, Generic, Sequence, TypeVar
 
 T = TypeVar("T")
 TTuple = TypeVar("TTuple", bound=tuple)
@@ -102,3 +102,28 @@ async def paginate(
         offset=offset,
         items=list(results[:-1]) if has_more else list(results),
     )
+
+
+async def iter_pages(
+    db: AsyncSession | Session,
+    query: Select[tuple[T]],
+    page_size: int = 1000,
+) -> AsyncIterable[PaginatedResult[T]]:
+    
+    offset = 0
+    total = await count(db=db, query=query)
+    while True:
+        query = query.offset(offset)
+        query = query.limit(page_size + 1)
+        results = await fetch_all(db=db, query=query)
+        has_more = len(results) > page_size
+        yield PaginatedResult(
+            has_more=has_more,
+            total=total or 0,
+            limit=page_size,
+            offset=offset,
+            items=list(results[:-1]) if has_more else list(results),
+        )
+        if not has_more:
+            break
+        offset += page_size

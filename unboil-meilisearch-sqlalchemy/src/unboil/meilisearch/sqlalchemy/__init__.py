@@ -1,11 +1,10 @@
-from typing import Any, AsyncIterable, Callable, Iterable, Sequence
+from typing import Any, AsyncIterable, Callable, Generic, Iterable, Sequence
 from sqlalchemy import delete, event, select
-from sqlalchemy.orm import DeclarativeBase, Session, InstrumentedAttribute, ColumnProperty
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import DeclarativeBase, Session, InstrumentedAttribute, ColumnProperty, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from meilisearch import Client
 from meilisearch.index import Index
 from meilisearch.models.document import Document
-
 
 
 def setup_sync[T](
@@ -131,6 +130,6 @@ def _iter_document_batches(
 def _to_document(instance: Any) -> dict[str, Any]:
     assert isinstance(instance, DeclarativeBase), "Expected instance of DeclarativeBase"
     return {
-        c.name: getattr(instance, c.name)
-        for c in instance.__table__.columns
+        column.name: getattr(instance, column.name)
+        for column in instance.__table__.columns
     }
