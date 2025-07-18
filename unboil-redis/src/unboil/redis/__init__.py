@@ -4,6 +4,11 @@ from redis import Redis
 from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable
 
 
+__all__ = [
+    "cached",
+    "acached",
+]
+
 P = ParamSpec("P")
 R = TypeVar("R")
 
