@@ -7,6 +7,8 @@ from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable
 __all__ = [
     "cached",
     "acached",
+    "redis_get",
+    "redis_set",
 ]
 
 P = ParamSpec("P")
@@ -25,11 +27,11 @@ def cached(
                 computed_key = key
             else:
                 computed_key = key(*args, **kwargs)
-            cached = _redis_get(client, computed_key)
+            cached = redis_get(client, computed_key)
             if cached is not None:
                 return cached
             result = func(*args, **kwargs)
-            _redis_set(client, computed_key, result, expire)
+            redis_set(client, computed_key, result, expire)
             return result
         return wrapper
     return decorator
@@ -47,21 +49,21 @@ def acached(
                 computed_key = key
             else:
                 computed_key = key(*args, **kwargs)
-            cached = _redis_get(client, computed_key)
+            cached = redis_get(client, computed_key)
             if cached is not None:
                 return cached
             result = await func(*args, **kwargs)
-            _redis_set(client, computed_key, result, expire)
+            redis_set(client, computed_key, result, expire)
             return result
         return wrapper
     return decorator
 
 
-def _redis_set(client: Redis, key: str, value: Any, expire: Optional[int]) -> None:
+def redis_set(client: Redis, key: str, value: Any, expire: Optional[int]) -> None:
     client.set(key, pickle.dumps(value), ex=expire)
 
 
-def _redis_get(client: Redis, key: str) -> Optional[Any]:
+def redis_get(client: Redis, key: str) -> Optional[Any]:
     cached = client.get(key)
     if cached is not None:
         if isinstance(cached, bytes):
