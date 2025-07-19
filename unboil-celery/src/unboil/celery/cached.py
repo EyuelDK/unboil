@@ -30,7 +30,7 @@ class CachedTask(Task, Generic[P, T]):
         
     def _init(
         self, 
-        redis: Redis, 
+        redis: "Redis", 
         key_func: Callable[..., str], 
         expire: int | None = None
     ):
@@ -59,7 +59,7 @@ class CachedTask(Task, Generic[P, T]):
         
 
 def register_task_with_cache(
-    redis: Redis,
+    redis: "Redis",
     key: Callable[P, str],
     app: Celery | None = None,
     expire: int | None = None,
