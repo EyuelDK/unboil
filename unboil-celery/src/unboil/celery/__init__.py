@@ -8,7 +8,7 @@ from typing import (
 
 __all__ = [
     "TypedTask",
-    "typed_task",
+    "register_task",
 ]
 
 
@@ -23,7 +23,7 @@ class TypedTask(Task, Generic[P]):
     def delay(self, *args: P.args, **kwargs: P.kwargs) -> AsyncResult: ...
 
 
-def typed_task(app: Celery | None = None, base: type[T2] = TypedTask, **kwargs):
+def register_task(app: Celery | None = None, base: type[T2] = TypedTask, **kwargs):
     def decorator(main: SyncOrAsyncCallable[P, T]) -> T2:
         wrapper = main
         if inspect.iscoroutinefunction(main):

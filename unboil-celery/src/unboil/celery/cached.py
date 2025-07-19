@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from celery import Task, Celery
 from typing import Any, Awaitable, Callable, Generic, TypeVar, ParamSpec, Union
 
-from unboil.celery.typed import typed_task
+from unboil.celery import register_task
 
 __all__ = [
     "cached_task",
@@ -61,7 +61,7 @@ def cached_task(
     expire: int | None = None,
 ) -> Callable[[SyncOrAsyncCallable[P, T]], CachedTask[P, T]]:
     def decorator(main: SyncOrAsyncCallable[P, T]) -> CachedTask[P, T]:
-        task = typed_task(app, base=CachedTask[P, T])(main)
+        task = register_task(app, base=CachedTask[P, T])(main)
         task._init(redis, key, expire)
         return task
     return decorator
