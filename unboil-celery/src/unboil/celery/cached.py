@@ -59,9 +59,9 @@ class CachedTask(Task, Generic[P, T]):
         
 
 def register_task_with_cache(
-    app: Celery,
     redis: Redis,
     key: Callable[P, str],
+    app: Celery | None = None,
     expire: int | None = None,
 ) -> Callable[[SyncOrAsyncCallable[P, T]], CachedTask[P, T]]:
     def decorator(main: SyncOrAsyncCallable[P, T]) -> CachedTask[P, T]:
