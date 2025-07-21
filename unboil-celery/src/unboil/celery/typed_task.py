@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import inspect
 from celery import Celery, Task, shared_task
 from celery.result import AsyncResult
@@ -37,13 +38,13 @@ def register_task(
 ) -> Callable[[SyncOrAsyncCallable[P, T]], TypedTask[P]]:
 
     def decorator(main: SyncOrAsyncCallable[P, T]) -> TypedTask[P]:
-        wrapper = main
-        if inspect.iscoroutinefunction(main):
-
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
+        if not inspect.iscoroutinefunction(main):
+            wrapped = main
+        else:
+            def async_caller(*args: P.args, **kwargs: P.kwargs) -> Any:
                 return asyncio.run(main(*args, **kwargs))
-
+            wrapped = functools.wraps(main)(async_caller)
         task_decorator = shared_task if app is None else app.task
-        return cast(TypedTask[P], task_decorator(**kwargs)(wrapper))
+        return cast(TypedTask[P], task_decorator(**kwargs)(wrapped))
 
     return decorator

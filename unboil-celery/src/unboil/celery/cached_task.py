@@ -2,7 +2,17 @@ import inspect
 import pickle
 from dataclasses import dataclass
 from celery import Task, Celery, shared_task
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Generic, Literal, TypeVar, ParamSpec, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    Generic,
+    Literal,
+    TypeVar,
+    ParamSpec,
+    Union,
+)
 
 from .typed_task import register_task, TypedTask
 
@@ -21,29 +31,29 @@ T = TypeVar("T")
 P = ParamSpec("P")
 SyncOrAsyncCallable = Callable[P, T | Awaitable[T]]
 
-    
+
 @dataclass(kw_only=True)
 class ResolvedCachedAsyncResult(Generic[T]):
     status: Literal["resolved"] = "resolved"
     value: T
 
-@dataclass(kw_only=True)    
+
+@dataclass(kw_only=True)
 class PendingCachedAsyncResult(Generic[T]):
     status: Literal["pending"] = "pending"
 
-CachedAsyncResult = Union[
-    ResolvedCachedAsyncResult[T],
-    PendingCachedAsyncResult[T]
-]
+
+CachedAsyncResult = Union[ResolvedCachedAsyncResult[T], PendingCachedAsyncResult[T]]
+
 
 class CachedTask(Generic[P, T]):
-        
+
     def __init__(
-        self, 
-        task: Task, 
+        self,
+        task: Task,
         redis: "Redis",
         expire: int | None,
-        key_func: Callable[..., str], 
+        key_func: Callable[..., str],
     ):
         self._task = task
         self._redis = redis
@@ -73,11 +83,13 @@ def register_cached_task(
     expire: int | None = None,
 ) -> Callable[[SyncOrAsyncCallable[P, T]], CachedTask[P, T]]:
     from unboil.redis import cached, acached
+
     def decorator(main: SyncOrAsyncCallable[P, T]) -> CachedTask[P, T]:
         if not inspect.iscoroutinefunction(main):
-            cached_main = cached(client= redis, key=key, expire=expire)(main)
+            cached_main = cached(client=redis, key=key, expire=expire)(main)
         else:
-            cached_main = acached(client= redis, key=key, expire=expire)(main)
+            cached_main = acached(client=redis, key=key, expire=expire)(main)
         task = register_task(app=app)(cached_main)
-        return CachedTask(task, redis, expire, key)
+        return CachedTask(task, redis=redis, expire=expire, key_func=key)
+
     return decorator
