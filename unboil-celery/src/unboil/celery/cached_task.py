@@ -12,6 +12,7 @@ from typing import (
     TypeVar,
     ParamSpec,
     Union,
+    cast,
 )
 from .typed_task import register_task, TypedTask
 from redis import Redis
@@ -89,7 +90,6 @@ def register_cached_task(
 
     def decorator(main: MaybeAsyncCallable[P, T]) -> CachedTask[P, T]:
         if is_async_callable(main):
-            x = main
             cached_func = acached(
                 client=redis_client,
                 key=key,
@@ -98,6 +98,7 @@ def register_cached_task(
                 deserialize=deserialize,
             )(main)
         else:
+            main = cast(Callable[P, T], main)
             cached_func = cached(
                 client=redis_client,
                 key=key,
