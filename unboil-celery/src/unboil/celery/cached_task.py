@@ -1,3 +1,4 @@
+import inspect
 import pickle
 from dataclasses import dataclass
 from celery import Task, Celery, shared_task
@@ -71,7 +72,12 @@ def register_cached_task(
     app: Celery | None = None,
     expire: int | None = None,
 ) -> Callable[[SyncOrAsyncCallable[P, T]], CachedTask[P, T]]:
+    from unboil.redis import cached, acached
     def decorator(main: SyncOrAsyncCallable[P, T]) -> CachedTask[P, T]:
-        task = register_task(app)(main)
+        if not inspect.iscoroutinefunction(main):
+            cached_main = cached(client= redis, key=key, expire=expire)(main)
+        else:
+            cached_main = acached(client= redis, key=key, expire=expire)(main)
+        task = register_task(app=app)(cached_main)
         return CachedTask(task, redis, expire, key)
     return decorator

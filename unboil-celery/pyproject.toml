@@ -12,8 +12,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-redis = [
-    "redis>=6.0.0",
+cache = [
+    "unboil-redis",
 ]
 
 [build-system]
@@ -22,3 +22,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 packages = ["src/unboil"]
+
+[tool.uv.sources]
+unboil-redis = { git = "https://github.com/eyueldk/unboil", subdirectory = "unboil-redis" }
