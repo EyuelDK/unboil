@@ -1,5 +1,6 @@
 import pickle
 import functools
+import orjson
 from redis import Redis
 from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable
 
@@ -11,28 +12,28 @@ __all__ = [
     "redis_set",
 ]
 
+T = TypeVar("T")
 P = ParamSpec("P")
-R = TypeVar("R")
 
 
 def cached(
     client: Redis,
     key: str | Callable[P, str],
     expire: Optional[int] = None
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             if isinstance(key, str):
                 computed_key = key
             else:
                 computed_key = key(*args, **kwargs)
-            cached = redis_get(client, computed_key)
-            if cached is not None:
-                return cached
-            result = func(*args, **kwargs)
-            redis_set(client, computed_key, result, expire)
-            return result
+            cached_value = redis_get(client, computed_key)
+            if cached_value is not None:
+                return cached_value
+            computed_value = func(*args, **kwargs)
+            redis_set(client, computed_key, computed_value, expire)
+            return computed_value
         return wrapper
     return decorator
 
@@ -41,39 +42,52 @@ def acached(
     client: Redis,
     key: str | Callable[P, str],
     expire: Optional[int] = None
-) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
-    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @functools.wraps(func)
-        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             if isinstance(key, str):
                 computed_key = key
             else:
                 computed_key = key(*args, **kwargs)
-            cached = redis_get(client, computed_key)
-            if cached is not None:
-                return cached
-            result = await func(*args, **kwargs)
-            redis_set(client, computed_key, result, expire)
-            return result
+            cached_value = redis_get(client, computed_key)
+            if cached_value is not None:
+                return cached_value
+            computed_value = await func(*args, **kwargs)
+            redis_set(client, computed_key, computed_value, expire)
+            return computed_value
         return wrapper
     return decorator
 
 
-def redis_set(client: Redis, key: str, value: Any, expire: Optional[int]) -> None:
-    client.set(key, pickle.dumps(value), ex=expire)
+def redis_set(
+    redis: Redis, 
+    key: str, value: Any, 
+    expire: Optional[int],
+    serialize: Optional[Callable[[Any], bytes]] = None
+) -> None:
+    if serialize is None:
+        serialize = orjson.dumps
+    redis.set(key, serialize(value), ex=expire)
 
 
-def redis_get(client: Redis, key: str) -> Optional[Any]:
-    cached = client.get(key)
-    if cached is not None:
-        if isinstance(cached, bytes):
-            data = cached
-        elif isinstance(cached, str):
-            data = client.get_encoder().encode(cached)
+def redis_get(
+    redis: Redis, 
+    key: str, 
+    deserialize: Optional[Callable[[bytes], T]] = None,
+) -> Optional[T]:
+    if deserialize is None:
+        deserialize = orjson.loads
+    cached_value = redis.get(key)
+    if cached_value is not None:
+        if isinstance(cached_value, bytes):
+            value = cached_value
+        elif isinstance(cached_value, str):
+            value = redis.get_encoder().encode(cached_value)
         else:
             raise ValueError("Unsupported type for cached value")
         try:
-            return pickle.loads(data)
+            return deserialize(value)
         except:
             return None
     return None
