@@ -7,7 +7,6 @@ from typing import (
     TypeGuard,
     TypeVar,
     Union,
-    overload,
 )
 
 
@@ -25,15 +24,7 @@ def make_union(*types: type) -> type:
     return Union[*types]  # type: ignore
 
 
-@overload
-def is_async_callable(func: AsyncCallable[P, T]) -> TypeGuard[AsyncCallable[P, T]]: ...
-
-
-@overload
-def is_async_callable(func: Callable[P, T]) -> TypeGuard[Callable[P, T]]: ...
-
-
 def is_async_callable(
     func: MaybeAsyncCallable[P, T],
-) -> TypeGuard[AsyncCallable[P, T]] | TypeGuard[Callable[P, T]]:
+) -> TypeGuard[AsyncCallable[P, T]]:
     return inspect.iscoroutinefunction(func)
