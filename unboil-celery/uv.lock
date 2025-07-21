@@ -225,21 +225,28 @@ source = { editable = "." }
 dependencies = [
     { name = "celery" },
     { name = "unboil-redis" },
+    { name = "unboil-typing" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "celery", specifier = ">=5.0.0" },
     { name = "unboil-redis", git = "https://github.com/eyueldk/unboil?subdirectory=unboil-redis" },
+    { name = "unboil-typing", git = "https://github.com/eyueldk/unboil?subdirectory=unboil-typing" },
 ]
 
 [[package]]
 name = "unboil-redis"
 version = "0.1.8"
-source = { git = "https://github.com/eyueldk/unboil?subdirectory=unboil-redis#74be9554cc466681c62d2bacdbfaa8eea1e40035" }
+source = { git = "https://github.com/eyueldk/unboil?subdirectory=unboil-redis#7d528f71536e45b8aa2e95100182159786d92d25" }
 dependencies = [
     { name = "redis", extra = ["hiredis"] },
 ]
+
+[[package]]
+name = "unboil-typing"
+version = "0.1.1"
+source = { git = "https://github.com/eyueldk/unboil?subdirectory=unboil-typing#7d528f71536e45b8aa2e95100182159786d92d25" }
 
 [[package]]
 name = "vine"

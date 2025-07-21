@@ -1,5 +1,10 @@
 import inspect
-from typing import Awaitable, Callable, Literal, TypeGuard, Union
+from typing import Awaitable, Callable, Literal, ParamSpec, TypeGuard, TypeVar, Union
+
+
+T = TypeVar("T")
+P = ParamSpec("P")
+MaybeAsyncCallable = Callable[P, T | Awaitable[T]]
 
 
 def make_literal(*values: str) -> type:
