@@ -25,6 +25,12 @@ def make_union(*types: type) -> type:
 
 
 def is_async_callable(
-    func: Callable[P, T],
+    func: MaybeAsyncCallable[P, T],
 ) -> TypeGuard[AsyncCallable[P, T]]:
     return inspect.iscoroutinefunction(func)
+
+
+def is_sync_callable(
+    func: MaybeAsyncCallable[P, T],
+) -> TypeGuard[Callable[P, T]]:
+    return not inspect.iscoroutinefunction(func)
