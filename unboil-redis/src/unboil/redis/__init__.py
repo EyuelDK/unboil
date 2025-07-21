@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import pickle
 import functools
 import orjson
@@ -91,3 +92,13 @@ def redis_get(
         except:
             return None
     return None
+
+
+@contextmanager
+def acquire_lock(redis: Redis, key: str, expire: int = 60):
+    lock_acquired = redis.set(key, "locked", nx=True, ex=expire)
+    try:
+        yield bool(lock_acquired)
+    finally:
+        if lock_acquired:
+            redis.delete(key)
