@@ -27,7 +27,7 @@ __all__ = [
 
 T = TypeVar("T")
 P = ParamSpec("P")
-SyncOrAsyncCallable = Callable[P, T | Awaitable[T]]
+MaybeAsyncCallable = Callable[P, T | Awaitable[T]]
 
 
 @dataclass(kw_only=True)
@@ -79,18 +79,32 @@ class CachedTask(Generic[P, T]):
 
 
 def register_cached_task(
-    redis: "Redis",
+    redis_client: "Redis",
     key: Callable[P, str],
     app: Celery | None = None,
     expire: int | None = None,
-) -> Callable[[SyncOrAsyncCallable[P, T]], CachedTask[P, T]]:
-    
-    def decorator(main: SyncOrAsyncCallable[P, T]) -> CachedTask[P, T]:
+    serialize: Callable[[Any], bytes] | None = None,
+    deserialize: Callable[[bytes], T] | None = None,
+) -> Callable[[MaybeAsyncCallable[P, T]], CachedTask[P, T]]:
+
+    def decorator(main: MaybeAsyncCallable[P, T]) -> CachedTask[P, T]:
         if not inspect.iscoroutinefunction(main):
-            cached_func = cached(client=redis, key=key, expire=expire)(main)
+            cached_func = cached(
+                client=redis_client,
+                key=key,
+                expire=expire,
+                serialize=serialize,
+                deserialize=deserialize,
+            )(main)
         else:
-            cached_func = acached(client=redis, key=key, expire=expire)(main)
+            cached_func = acached(
+                client=redis_client,
+                key=key,
+                expire=expire,
+                serialize=serialize,
+                deserialize=deserialize,
+            )(main)
         task = register_task(app=app)(cached_func)
-        return CachedTask(task, redis=redis, expire=expire, key_func=key)
+        return CachedTask(task, redis=redis_client, expire=expire, key_func=key)
 
     return decorator
