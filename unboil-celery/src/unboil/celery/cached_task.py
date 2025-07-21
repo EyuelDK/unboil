@@ -13,11 +13,9 @@ from typing import (
     ParamSpec,
     Union,
 )
-
 from .typed_task import register_task, TypedTask
-
-if TYPE_CHECKING:
-    from redis import Redis
+from redis import Redis
+from unboil.redis import cached, acached
 
 
 __all__ = [
@@ -86,14 +84,13 @@ def register_cached_task(
     app: Celery | None = None,
     expire: int | None = None,
 ) -> Callable[[SyncOrAsyncCallable[P, T]], CachedTask[P, T]]:
-    from unboil.redis import cached, acached
-
+    
     def decorator(main: SyncOrAsyncCallable[P, T]) -> CachedTask[P, T]:
         if not inspect.iscoroutinefunction(main):
-            cached_main = cached(client=redis, key=key, expire=expire)(main)
+            cached_func = cached(client=redis, key=key, expire=expire)(main)
         else:
-            cached_main = acached(client=redis, key=key, expire=expire)(main)
-        task = register_task(app=app)(cached_main)
+            cached_func = acached(client=redis, key=key, expire=expire)(main)
+        task = register_task(app=app)(cached_func)
         return CachedTask(task, redis=redis, expire=expire, key_func=key)
 
     return decorator
