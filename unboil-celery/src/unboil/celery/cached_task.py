@@ -60,6 +60,10 @@ class CachedTask(Generic[P, T]):
         self._expire = expire
         self._key_func = key_func
 
+    def invalidate(self, *args: P.args, **kwargs: P.kwargs) -> None:
+        key = self._key_func(*args, **kwargs)
+        self._redis.delete(key)
+
     def try_delay(self, *args: P.args, **kwargs: P.kwargs) -> CachedAsyncResult[T]:
         key = self._key_func(*args, **kwargs)
         cached_result = self._redis.get(key)
