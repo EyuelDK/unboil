@@ -1,5 +1,5 @@
 [project]
-name = "unboil-utils-typing"
+name = "unboil-typing"
 version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
