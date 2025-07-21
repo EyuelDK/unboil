@@ -88,9 +88,8 @@ def register_cached_task(
 ) -> Callable[[MaybeAsyncCallable[P, T]], CachedTask[P, T]]:
 
     def decorator(main: MaybeAsyncCallable[P, T]) -> CachedTask[P, T]:
-        if not is_async_callable(main):
-            x = main
-            cached_func = cached(
+        if is_async_callable(main):
+            cached_func = acached(
                 client=redis_client,
                 key=key,
                 expire=expire,
@@ -98,7 +97,8 @@ def register_cached_task(
                 deserialize=deserialize,
             )(main)
         else:
-            cached_func = acached(
+            x = main
+            cached_func = cached(
                 client=redis_client,
                 key=key,
                 expire=expire,

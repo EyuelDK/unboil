@@ -1,10 +1,20 @@
 import inspect
-from typing import Awaitable, Callable, Literal, ParamSpec, TypeGuard, TypeVar, Union
+from typing import (
+    Awaitable,
+    Callable,
+    Literal,
+    ParamSpec,
+    TypeGuard,
+    TypeVar,
+    Union,
+    overload,
+)
 
 
 T = TypeVar("T")
 P = ParamSpec("P")
-MaybeAsyncCallable = Callable[P, T] | Callable[P, Awaitable[T]]
+AsyncCallable = Callable[P, Awaitable[T]]
+MaybeAsyncCallable = AsyncCallable[P, T] | Callable[P, T]
 
 
 def make_literal(*values: str) -> type:
@@ -15,7 +25,15 @@ def make_union(*types: type) -> type:
     return Union[*types]  # type: ignore
 
 
+@overload
+def is_async_callable(func: AsyncCallable[P, T]) -> TypeGuard[AsyncCallable[P, T]]: ...
+
+
+@overload
+def is_async_callable(func: Callable[P, T]) -> TypeGuard[Callable[P, T]]: ...
+
+
 def is_async_callable(
-    func: Callable[P, T | Awaitable[T]]
-) -> TypeGuard[Callable[P, Awaitable[T]]]:
+    func: MaybeAsyncCallable[P, T],
+) -> TypeGuard[AsyncCallable[P, T]] | TypeGuard[Callable[P, T]]:
     return inspect.iscoroutinefunction(func)

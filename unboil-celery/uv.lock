@@ -238,15 +238,15 @@ requires-dist = [
 [[package]]
 name = "unboil-redis"
 version = "0.1.8"
-source = { git = "https://github.com/eyueldk/unboil?subdirectory=unboil-redis#53f1c231438029f89a03d9a1f423197666374e7e" }
+source = { git = "https://github.com/eyueldk/unboil?subdirectory=unboil-redis#62b875403419191fa4ad31aaf3735228c73dc08d" }
 dependencies = [
     { name = "redis", extra = ["hiredis"] },
 ]
 
 [[package]]
 name = "unboil-typing"
-version = "0.1.2"
-source = { git = "https://github.com/eyueldk/unboil?subdirectory=unboil-typing#53f1c231438029f89a03d9a1f423197666374e7e" }
+version = "0.1.3"
+source = { git = "https://github.com/eyueldk/unboil?subdirectory=unboil-typing#62b875403419191fa4ad31aaf3735228c73dc08d" }
 
 [[package]]
 name = "vine"
