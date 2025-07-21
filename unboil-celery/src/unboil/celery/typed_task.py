@@ -3,7 +3,7 @@ import inspect
 from celery import Celery, Task, shared_task
 from celery.result import AsyncResult
 from typing import (
-    Generic, ParamSpec, Callable, Awaitable, Any, TypeVar, cast
+    TYPE_CHECKING, Generic, ParamSpec, Callable, Awaitable, Any, TypeVar, cast
 )
 
 __all__ = [
@@ -19,8 +19,9 @@ SyncOrAsyncCallable = Callable[P, T | Awaitable[T]]
 
 
 class TypedTask(Task, Generic[P]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs): ...
-    def delay(self, *args: P.args, **kwargs: P.kwargs) -> AsyncResult: ...
+    if TYPE_CHECKING:
+        def __call__(self, *args: P.args, **kwargs: P.kwargs): ...
+        def delay(self, *args: P.args, **kwargs: P.kwargs) -> AsyncResult: ...
 
 
 def register_task(app: Celery | None = None, base: type[T2] = TypedTask, **kwargs):
