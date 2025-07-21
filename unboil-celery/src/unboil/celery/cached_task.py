@@ -16,6 +16,7 @@ from typing import (
 from .typed_task import register_task, TypedTask
 from redis import Redis
 from unboil.redis import cached, acached
+from unboil.typing import MaybeAsyncCallable, is_async_callable
 
 
 __all__ = [
@@ -27,7 +28,6 @@ __all__ = [
 
 T = TypeVar("T")
 P = ParamSpec("P")
-MaybeAsyncCallable = Callable[P, T | Awaitable[T]]
 
 
 @dataclass(kw_only=True)
@@ -88,7 +88,8 @@ def register_cached_task(
 ) -> Callable[[MaybeAsyncCallable[P, T]], CachedTask[P, T]]:
 
     def decorator(main: MaybeAsyncCallable[P, T]) -> CachedTask[P, T]:
-        if not inspect.iscoroutinefunction(main):
+        if not is_async_callable(main):
+            x = main
             cached_func = cached(
                 client=redis_client,
                 key=key,
