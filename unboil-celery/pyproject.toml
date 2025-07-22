@@ -1,6 +1,6 @@
 [project]
 name = "unboil-celery"
-version = "0.1.11"
+version = "0.1.12"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -9,8 +9,11 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "celery>=5.0.0",
+]
+
+[project.optional-dependencies]
+redis = [
     "unboil-redis",
-    "unboil-typing",
 ]
 
 [build-system]
@@ -22,4 +25,3 @@ packages = ["src/unboil"]
 
 [tool.uv.sources]
 unboil-redis = { git = "https://github.com/eyueldk/unboil", subdirectory = "unboil-redis" }
-unboil-typing = { git = "https://github.com/eyueldk/unboil", subdirectory = "unboil-typing" }

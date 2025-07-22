@@ -14,11 +14,10 @@ from typing import (
     Union,
     cast,
 )
-from .typed_task import register_task, TypedTask
-from redis import Redis
-from unboil.redis import cached, acached
-from unboil.typing import MaybeAsyncCallable, is_async_callable
+from .typed import register_task
 
+if TYPE_CHECKING:
+    from redis import Redis
 
 __all__ = [
     "register_cached_task",
@@ -50,14 +49,16 @@ class CachedTask(Generic[P, T]):
     def __init__(
         self,
         task: Task,
-        redis: "Redis",
+        client: "Redis",
         expire: int | None,
         key_func: Callable[..., str],
+        deserialize: Callable[[bytes], T],
     ):
         self._task = task
-        self._redis = redis
+        self._redis = client
         self._expire = expire
         self._key_func = key_func
+        self._deserialize = deserialize
 
     def invalidate(self, *args: P.args, **kwargs: P.kwargs) -> None:
         key = self._key_func(*args, **kwargs)
@@ -76,7 +77,7 @@ class CachedTask(Generic[P, T]):
                 cached_result = self._redis.get_encoder().encode(cached_result)
             else:
                 raise ValueError("Unsupported type for cached value")
-            return ResolvedCachedAsyncResult(value=pickle.loads(cached_result))
+            return ResolvedCachedAsyncResult(value=self._deserialize(cached_result))
 
 
 def register_cached_task(
@@ -86,10 +87,24 @@ def register_cached_task(
     expire: int | None = None,
     serialize: Callable[[Any], bytes] | None = None,
     deserialize: Callable[[bytes], T] | None = None,
-) -> Callable[[MaybeAsyncCallable[P, T]], CachedTask[P, T]]:
+) -> Callable[[Callable[P, T | Awaitable[T]]], CachedTask[P, T]]:
+    
+    try:
+        from unboil.redis import cached, acached
+    except ImportError as e:
+        raise ImportError(
+            f"The '{register_cached_task.__name__}' feature requires the 'unboil.redis' module. "
+            "Install the optional dependency with: pip install unboil-celery[redis]"
+        ) from e
+    
+    if serialize is None:
+        serialize = pickle.dumps
 
-    def decorator(main: MaybeAsyncCallable[P, T]) -> CachedTask[P, T]:
-        if is_async_callable(main):
+    if deserialize is None:
+        deserialize = pickle.loads
+
+    def decorator(main: Callable[P, T | Awaitable[T]]) -> CachedTask[P, T]:
+        if inspect.iscoroutinefunction(main):
             cached_func = acached(
                 client=redis_client,
                 key=key,
@@ -107,6 +122,12 @@ def register_cached_task(
                 deserialize=deserialize,
             )(main)
         task = register_task(app=app)(cached_func)
-        return CachedTask(task, redis=redis_client, expire=expire, key_func=key)
+        return CachedTask(
+            task, 
+            client=redis_client, 
+            expire=expire, 
+            key_func=key, 
+            deserialize=deserialize
+        )
 
     return decorator

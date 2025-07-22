@@ -13,7 +13,6 @@ from typing import (
     TypeVar,
     cast,
 )
-from unboil.typing import MaybeAsyncCallable
 
 __all__ = [
     "TypedTask",
@@ -35,9 +34,9 @@ class TypedTask(Task, Generic[P]):
 
 def register_task(
     app: Celery | None = None, **kwargs
-) -> Callable[[MaybeAsyncCallable[P, T]], TypedTask[P]]:
+) -> Callable[[Callable[P, T | Awaitable[T]]], TypedTask[P]]:
 
-    def decorator(main: MaybeAsyncCallable[P, T]) -> TypedTask[P]:
+    def decorator(main: Callable[P, T | Awaitable[T]]) -> TypedTask[P]:
         if not inspect.iscoroutinefunction(main):
             wrapped = main
         else:

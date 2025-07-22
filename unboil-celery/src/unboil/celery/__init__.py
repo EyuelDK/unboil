@@ -1,2 +1,2 @@
-from .typed_task import *
-from .cached_task import *
+from .typed import *
+from .cached import *
